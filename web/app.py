@@ -3,7 +3,14 @@
 from __future__ import annotations
 
 import os
+import sys
+from pathlib import Path
 from typing import Any
+
+_ROOT = Path(__file__).resolve().parent.parent
+_SRC = _ROOT / "src"
+if _SRC.is_dir() and str(_SRC) not in sys.path:
+    sys.path.insert(0, str(_SRC))
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware

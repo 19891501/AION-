@@ -1,11 +1,10 @@
-# Blueprint Render — https://render.com/docs/blueprint-spec
 services:
   - type: web
     name: aion
     runtime: python
     plan: free
     region: frankfurt
-    buildCommand: pip install -e ".[dev]" && pip install -r requirements.txt
+    buildCommand: pip install -r requirements.txt && pip install -e .
     startCommand: uvicorn web.app:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     envVars:
@@ -13,3 +12,5 @@ services:
         value: "3.12.0"
       - key: AION_PROVIDER
         value: local
+      - key: PYTHONPATH
+        value: src

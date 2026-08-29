@@ -1,4 +1,4 @@
-"""AION Web API — surface HTTP minimale pour déploiement Render."""
+"""AION Web API + interface."""
 
 from __future__ import annotations
 
@@ -14,6 +14,8 @@ if _SRC.is_dir() and str(_SRC) not in sys.path:
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 try:
@@ -45,15 +47,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+_STATIC = Path(__file__).resolve().parent / "static"
+if _STATIC.is_dir():
+    app.mount("/static", StaticFiles(directory=str(_STATIC)), name="static")
+
 
 def _require_aion() -> None:
     if not AION_OK:
         raise HTTPException(
             status_code=503,
-            detail=(
-                f"package aion incomplet: {_IMPORT_ERROR}. "
-                "Pousser src/aion/* complet sur GitHub puis redeploy."
-            ),
+            detail=f"package aion incomplet: {_IMPORT_ERROR}",
         )
 
 
@@ -66,7 +69,20 @@ def _ledger():
 
 
 @app.get("/")
-def root() -> dict[str, Any]:
+def root():
+    index = _STATIC / "index.html"
+    if index.is_file():
+        return FileResponse(index)
+    return {
+        "service": "AION",
+        "version": __version__,
+        "aion_package": "ok" if AION_OK else f"missing: {_IMPORT_ERROR}",
+        "docs": "/docs",
+    }
+
+
+@app.get("/api")
+def api_info() -> dict[str, Any]:
     return {
         "service": "AION",
         "version": __version__,

@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "date_gel": "2026-08-24",
+  "objet": "AION-EUROS : mesure retrospective du kernel en euros, sur decisions reelles",
+  "note": "Fichier separe du pre-enregistrement principal pour ne pas invalider son empreinte. Metrique nouvelle, gelee AVANT toute mesure sur donnees reelles.",
+  "hypotheses": {
+    "H0": "Le kernel coute plus cher en friction qu'il ne fait economiser : ratio de prudence < 1.",
+    "H1": "Le ratio de prudence est >= 1.5 sur au moins 30 decisions reelles passees."
+  },
+  "conditions_de_validite": {
+    "decisions_minimum": 30,
+    "issue_connue_pour_chaque_decision": true,
+    "decisions_reelles": "aucune decision inventee ou reconstituee de memoire sans trace",
+    "periode_minimum_mois": 6
+  },
+  "criteres": {
+    "ratio_minimum": 1.5,
+    "rattrapage_retenu": 0.7,
+    "rattrapage_pessimiste_a_publier": 0.3,
+    "cout_verification_retenu_euros": 4.0,
+    "part_gain_perdue_par_hesitation": 0.2,
+    "publier_la_table_de_sensibilite": true
+  },
+  "decision": {
+    "go": "ratio >= 1.5 y compris au rattrapage pessimiste 0.3 -> l'abstention paie, resultat publiable",
+    "incertain": "ratio >= 1.5 seulement au rattrapage optimiste -> non concluant, ne rien revendiquer",
+    "no_go": "ratio < 1 -> le kernel coute plus qu'il ne sauve, publier le negatif"
+  },
+  "engagements": [
+    "Le taux de rattrapage et le cout de verification sont des HYPOTHESES, jamais des mesures.",
+    "Aucun ratio ne sera publie sans la table de sensibilite complete.",
+    "Le seuil d'equilibre est publie meme quand il est defavorable.",
+    "Le cout d'opportunite est toujours compte : sans lui, un kernel qui bloque tout parait infiniment rentable."
+  ]
+}

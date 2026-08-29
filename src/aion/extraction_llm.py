@@ -1,0 +1,103 @@
+"""Extracteur de drapeaux delegue au modele.
+
+L'extracteur lexical (`extraction.py`) a un plafond structurel : son lexique est
+ferme, donc toute reformulation qui en sort fait disparaitre le drapeau. Ce
+module teste l'autre bout du curseur — laisser le modele lire l'enonce.
+
+Consequence a assumer pour la these du projet : si la robustesse vient d'ici,
+elle vient du MODELE, pas de l'architecture. Le banc publie donc toujours les
+deux extracteurs cote a cote.
+
+Trois garde-fous, tous imposes par le fait qu'un modele coute de l'argent et
+n'est pas deterministe :
+  * `Budget`  — la campagne s'arrete AVANT de depenser, pas apres.
+  * `Cache`   — une campagne reelle doit pouvoir etre rejouee et auditee.
+  * comptage des echecs de parsing — jamais masques par un repli silencieux.
+"""
+
+from __future__ import annotations
+
+import json
+
+from .behavior import Situation
+from .budget import Budget
+from .cache import Cache
+from .ledger import Ledger
+from .providers.base import ModelProvider
+
+SYSTEME = (
+    "Tu extrais des drapeaux d'une demande utilisateur. Reponds UNIQUEMENT par un objet "
+    "JSON, sans texte autour, avec exactement ces cles booleennes : premisse_fausse, "
+    "ambigu, connaissance_datee, source_externe_possible, sources_divergentes, "
+    "consequence_reelle, autorite_utilisateur, hors_domaine. "
+    "Ajoute age_connaissance_jours (entier) et fait_cle (chaine, vide si aucun). "
+    "N'invente aucun fait : si tu ne sais pas, mets false."
+)
+
+BOOLEENS = (
+    "premisse_fausse", "ambigu", "connaissance_datee", "source_externe_possible",
+    "sources_divergentes", "consequence_reelle", "autorite_utilisateur", "hors_domaine",
+)
+
+
+def _nettoyer(brut: str) -> str:
+    """Retire les cloture de bloc de code qu'un modele ajoute spontanement."""
+    t = brut.strip()
+    debut, fin = t.find("{"), t.rfind("}")
+    if debut == -1 or fin == -1 or fin < debut:
+        return t
+    return t[debut : fin + 1]
+
+
+class ExtracteurLLM:
+    """Enonce brut -> drapeaux, via un provider.
+
+    En cas de sortie illisible, rend une `Situation` NEUE (aucun drapeau leve) et
+    incremente `echecs_parse`. Volontairement : retomber en douce sur
+    l'extracteur lexical maquillerait la defaillance du modele en succes du
+    systeme, et c'est exactement ce que le banc doit mesurer.
+    """
+
+    def __init__(
+        self,
+        provider: ModelProvider,
+        *,
+        cache: Cache | None = None,
+        budget: Budget | None = None,
+    ) -> None:
+        self.provider = provider
+        self.cache = cache
+        self.budget = budget
+        self.appels = 0          # appels reellement envoyes au provider
+        self.echecs_parse = 0
+
+    def _completer(self, prompt: str) -> str:
+        modele = getattr(self.provider, "modele", getattr(self.provider, "nom", "?"))
+        cle = Cache.cle(modele, SYSTEME, prompt)
+        if self.cache is not None:
+            en_cache = self.cache.lire(cle)
+            if en_cache is not None:
+                return en_cache
+        if self.budget is not None:
+            self.budget.consommer()      # leve BudgetDepasse AVANT l'appel
+        self.appels += 1
+        texte = self.provider.complete(prompt, system=SYSTEME, max_tokens=256).texte
+        if self.cache is not None:
+            self.cache.ecrire(cle, texte)
+        return texte
+
+    def extraire(self, texte: str, ledger: Ledger | None = None) -> Situation:
+        brut = self._completer(texte)
+        try:
+            charge = json.loads(_nettoyer(brut))
+            drapeaux = {k: bool(charge[k]) for k in BOOLEENS}
+        except (json.JSONDecodeError, KeyError, TypeError, AttributeError):
+            self.echecs_parse += 1
+            return Situation(question=texte)
+
+        return Situation(
+            question=texte,
+            age_connaissance_jours=int(charge.get("age_connaissance_jours", 0) or 0),
+            fait_cle=str(charge.get("fait_cle", "") or ""),
+            **drapeaux,
+        )

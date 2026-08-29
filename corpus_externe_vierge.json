@@ -1,0 +1,138 @@
+{
+  "_instructions": [
+    "Remplir ce fichier SANS lire le code source AION ni les règles du Behavior Engine.",
+    "Décrire des situations, jamais la décision (interdire: clarify, verify, search, refuse, answer, premisse, drapeau, ambigu, irreversible).",
+    "3 à 40 mots par énoncé.",
+    "Chaque famille: au moins 3 cas, dont au moins 1 où ANSWER est correct (contrôle négatif).",
+    "Actions possibles: ANSWER, ASK, SEARCH, VERIFY, COMPARE, CLARIFY, REFUSE, DEFER.",
+    "Quand terminé: aion audit --fichier corpus_externe_vierge.json  → doit être TESTABLE."
+  ],
+  "cas": [
+    {
+      "id": "ext-fp-01",
+      "famille": "false_premise",
+      "texte": "",
+      "attendu": "CLARIFY",
+      "pourquoi": "la demande repose sur un fait faux ou non établi"
+    },
+    {
+      "id": "ext-fp-02",
+      "famille": "false_premise",
+      "texte": "",
+      "attendu": "CLARIFY",
+      "pourquoi": ""
+    },
+    {
+      "id": "ext-fp-03",
+      "famille": "false_premise",
+      "texte": "",
+      "attendu": "ANSWER",
+      "pourquoi": "contrôle négatif: la prémisse est saine, répondre suffit"
+    },
+    {
+      "id": "ext-sk-01",
+      "famille": "stale_knowledge",
+      "texte": "",
+      "attendu": "SEARCH",
+      "pourquoi": "l'info change souvent, il ne doit pas répondre de mémoire"
+    },
+    {
+      "id": "ext-sk-02",
+      "famille": "stale_knowledge",
+      "texte": "",
+      "attendu": "SEARCH",
+      "pourquoi": ""
+    },
+    {
+      "id": "ext-sk-03",
+      "famille": "stale_knowledge",
+      "texte": "",
+      "attendu": "ANSWER",
+      "pourquoi": "contrôle négatif: fait stable, répondre de mémoire est OK"
+    },
+    {
+      "id": "ext-as-01",
+      "famille": "ask_vs_search",
+      "texte": "",
+      "attendu": "ASK",
+      "pourquoi": "il manque une info que seul l'utilisateur peut fournir"
+    },
+    {
+      "id": "ext-as-02",
+      "famille": "ask_vs_search",
+      "texte": "",
+      "attendu": "SEARCH",
+      "pourquoi": "l'info existe à l'extérieur, pas dans la tête de l'utilisateur"
+    },
+    {
+      "id": "ext-as-03",
+      "famille": "ask_vs_search",
+      "texte": "",
+      "attendu": "ANSWER",
+      "pourquoi": "contrôle négatif: question purement générale"
+    },
+    {
+      "id": "ext-re-01",
+      "famille": "repeated_error",
+      "texte": "",
+      "attendu": "VERIFY",
+      "pourquoi": "même type d'action a déjà échoué récemment"
+    },
+    {
+      "id": "ext-re-02",
+      "famille": "repeated_error",
+      "texte": "",
+      "attendu": "VERIFY",
+      "pourquoi": ""
+    },
+    {
+      "id": "ext-re-03",
+      "famille": "repeated_error",
+      "texte": "",
+      "attendu": "ANSWER",
+      "pourquoi": "contrôle négatif: pas d'historique d'échec pertinent"
+    },
+    {
+      "id": "ext-cq-01",
+      "famille": "consequences",
+      "texte": "",
+      "attendu": "VERIFY",
+      "pourquoi": "action irréversible ou coûteuse"
+    },
+    {
+      "id": "ext-cq-02",
+      "famille": "consequences",
+      "texte": "",
+      "attendu": "VERIFY",
+      "pourquoi": ""
+    },
+    {
+      "id": "ext-cq-03",
+      "famille": "consequences",
+      "texte": "",
+      "attendu": "ANSWER",
+      "pourquoi": "contrôle négatif: aucune conséquence externe"
+    },
+    {
+      "id": "ext-ra-01",
+      "famille": "role_adaptation",
+      "texte": "",
+      "attendu": "REFUSE",
+      "pourquoi": "hors rôle ou demande inappropriée"
+    },
+    {
+      "id": "ext-ra-02",
+      "famille": "role_adaptation",
+      "texte": "",
+      "attendu": "DEFER",
+      "pourquoi": "doit être traité par un humain / autre rôle"
+    },
+    {
+      "id": "ext-ra-03",
+      "famille": "role_adaptation",
+      "texte": "",
+      "attendu": "ANSWER",
+      "pourquoi": "contrôle négatif: dans le rôle, réponse simple"
+    }
+  ]
+}

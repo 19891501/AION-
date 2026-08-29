@@ -16,13 +16,21 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from aion import __version__
-from aion.audit import auditer, resume_audit
-from aion.behavior import Situation, selectionner
-from aion.bench.cases import CAS, LEDGER_SEED, MONDE
-from aion.ledger import Ledger
-from aion.preenregistrement import charger as charger_pre, empreinte
-from aion.veritas import Evidence, check
+try:
+    from aion import __version__
+    from aion.audit import auditer, resume_audit
+    from aion.behavior import Situation, selectionner
+    from aion.bench.cases import CAS, LEDGER_SEED, MONDE
+    from aion.ledger import Ledger
+    from aion.preenregistrement import charger as charger_pre, empreinte
+    from aion.veritas import Evidence, check
+
+    AION_OK = True
+    _IMPORT_ERROR = ""
+except ImportError as exc:
+    __version__ = "0.1.0-partial"
+    AION_OK = False
+    _IMPORT_ERROR = str(exc)
 
 app = FastAPI(
     title="AION",
@@ -38,7 +46,19 @@ app.add_middleware(
 )
 
 
-def _ledger() -> Ledger:
+def _require_aion() -> None:
+    if not AION_OK:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                f"package aion incomplet: {_IMPORT_ERROR}. "
+                "Pousser src/aion/* complet sur GitHub puis redeploy."
+            ),
+        )
+
+
+def _ledger():
+    _require_aion()
     led = Ledger()
     for fait, statut, justification, source in LEDGER_SEED:
         led.append(fait, statut, justification=justification, source=source)
@@ -50,6 +70,7 @@ def root() -> dict[str, Any]:
     return {
         "service": "AION",
         "version": __version__,
+        "aion_package": "ok" if AION_OK else f"missing: {_IMPORT_ERROR}",
         "docs": "/docs",
         "health": "/health",
         "endpoints": ["/status", "/audit", "/decide", "/preenreg"],
@@ -58,11 +79,16 @@ def root() -> dict[str, Any]:
 
 @app.get("/health")
 def health() -> dict[str, str]:
-    return {"status": "ok", "version": __version__}
+    return {
+        "status": "ok" if AION_OK else "degraded",
+        "version": __version__,
+        "aion_package": "ok" if AION_OK else f"missing: {_IMPORT_ERROR}",
+    }
 
 
 @app.get("/status")
 def status() -> dict[str, Any]:
+    _require_aion()
     pre = charger_pre()
     rapport = auditer(CAS, MONDE, _ledger())
     return {
@@ -90,12 +116,14 @@ def status() -> dict[str, Any]:
 
 @app.get("/preenreg")
 def preenreg() -> dict[str, Any]:
+    _require_aion()
     pre = charger_pre()
     return {"empreinte": empreinte(), "contenu": pre}
 
 
 @app.get("/audit")
 def audit() -> dict[str, Any]:
+    _require_aion()
     return resume_audit(CAS, MONDE, _ledger())
 
 
@@ -115,6 +143,7 @@ class DecideIn(BaseModel):
 
 @app.post("/decide")
 def decide(body: DecideIn) -> dict[str, Any]:
+    _require_aion()
     sit = Situation(
         question=body.question,
         premisse_fausse=body.premisse_fausse,
@@ -145,6 +174,7 @@ class VeritasIn(BaseModel):
 
 @app.post("/veritas")
 def veritas(body: VeritasIn) -> dict[str, Any]:
+    _require_aion()
     evs = []
     for e in body.evidences:
         try:

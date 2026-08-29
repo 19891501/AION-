@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="fr"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>AION</title>
+<style>
+:root{--bg:#0b0f14;--p:#121820;--p2:#1a222d;--b:#2a3544;--t:#e8eef6;--m:#8b9bb0;--a:#3d9cf0;--ok:#7fd962;--w:#f5a623;--d:#f07178}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--t);min-height:100vh}
+header{padding:1rem 1.25rem;border-bottom:1px solid var(--b);display:flex;justify-content:space-between;align-items:center}
+h1{font-size:1.25rem} .sub{color:var(--m);font-size:.85rem}
+.badge{font-size:.7rem;padding:.2rem .5rem;border-radius:999px;border:1px solid var(--b)}
+.badge.ok{color:var(--ok);border-color:#3a5a30}
+main{max-width:1000px;margin:0 auto;padding:1.25rem;display:grid;gap:1rem}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media(max-width:800px){.grid{grid-template-columns:1fr}}
+.card{background:var(--p);border:1px solid var(--b);border-radius:12px;padding:1.1rem}
+.card h2{font-size:.95rem;margin-bottom:.75rem;color:var(--a)}
+label{display:block;font-size:.72rem;color:var(--m);margin:.4rem 0 .2rem;text-transform:uppercase}
+textarea,input,select{width:100%;background:var(--p2);border:1px solid var(--b);color:var(--t);border-radius:8px;padding:.55rem .65rem;font:inherit}
+textarea{min-height:72px;resize:vertical}
+.flags{display:grid;grid-template-columns:1fr 1fr;gap:.35rem;font-size:.82rem;color:var(--m);margin:.5rem 0}
+.btn{border:0;border-radius:8px;padding:.65rem 1rem;font-weight:600;cursor:pointer;background:var(--a);color:#061018;margin-top:.5rem}
+.btn:disabled{opacity:.5}
+.btn2{background:var(--p2);color:var(--t);border:1px solid var(--b)}
+.out{background:var(--p2);border:1px solid var(--b);border-radius:8px;padding:.85rem;margin-top:.6rem;font-family:ui-monospace,monospace;font-size:.82rem;white-space:pre-wrap;min-height:56px;color:var(--m)}
+.out.ok{color:var(--t)}
+.pill{display:inline-block;padding:.15rem .45rem;border-radius:6px;font-weight:600;font-size:.78rem}
+.pill.VERIFY,.pill.SEARCH,.pill.TESTER{background:#1a3040;color:var(--a)}
+.pill.ANSWER,.pill.PROOF,.pill.EXECUTER{background:#1a3020;color:var(--ok)}
+.pill.ASK,.pill.CLARIFY,.pill.CONFLICT,.pill.DEMANDER_HUMAIN{background:#302810;color:var(--w)}
+.pill.REFUSE,.pill.FAIL,.pill.NO_ACTION{background:#301818;color:var(--d)}
+.chain{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;margin:.6rem 0;font-family:ui-monospace,monospace;font-size:.8rem}
+.sc{display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:.5rem}
+.sc button{font-size:.72rem;padding:.3rem .5rem;border-radius:6px;background:transparent;border:1px solid var(--b);color:var(--m);cursor:pointer}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:.5rem}
+.stat{background:var(--p2);border:1px solid var(--b);border-radius:8px;padding:.6rem}
+.stat .k{font-size:.65rem;color:var(--m);text-transform:uppercase}.stat .v{font-family:ui-monospace,monospace;font-size:.9rem}
+.ev{display:grid;grid-template-columns:1fr auto auto;gap:.4rem;margin:.3rem 0}
+</style></head>
+<body>
+<header>
+  <div><h1>AION</h1><div class="sub">la preuve décide, pas l'intention</div></div>
+  <div id="badge" class="badge">…</div>
+</header>
+<main>
+<section class="card"><h2>01 · État</h2><div class="stats" id="stats"><div class="stat"><div class="k">…</div></div></div></section>
+<div class="grid">
+<section class="card">
+  <h2>02 · Behavior Engine</h2>
+  <div class="sc" id="sc"></div>
+  <label>Question</label>
+  <textarea id="q">Envoie le virement de 10000 €</textarea>
+  <div class="flags">
+    <label><input type="checkbox" id="consequence_reelle" checked/> conséquence réelle</label>
+    <label><input type="checkbox" id="premisse_fausse"/> prémisse fausse</label>
+    <label><input type="checkbox" id="ambigu"/> ambigu</label>
+    <label><input type="checkbox" id="autorite_utilisateur"/> info utilisateur</label>
+    <label><input type="checkbox" id="connaissance_datee"/> connaissance datée</label>
+    <label><input type="checkbox" id="sources_divergentes"/> sources divergentes</label>
+    <label><input type="checkbox" id="hors_domaine"/> hors domaine</label>
+    <label><input type="checkbox" id="source_externe_possible" checked/> capteur externe</label>
+  </div>
+  <label>Âge (jours)</label><input type="number" id="age" value="0" min="0"/>
+  <button class="btn" id="bd">Décider</button>
+  <div class="out" id="od">Résultat…</div>
+</section>
+<section class="card">
+  <h2>03 · Veritas + Arbitre</h2>
+  <label>Affirmation</label>
+  <input id="claim" value="Le bénéficiaire est bien celui demandé"/>
+  <label>Preuves</label>
+  <div id="evs">
+    <div class="ev"><input class="s" value="bank"/><select class="p"><option value="true" selected>pour</option><option value="false">contre</option></select><input class="a" type="number" value="0" style="width:3.5rem"/></div>
+    <div class="ev"><input class="s" value="beneficiary_check"/><select class="p"><option value="true">pour</option><option value="false" selected>contre</option></select><input class="a" type="number" value="0" style="width:3.5rem"/></div>
+  </div>
+  <button class="btn btn2" id="ae" type="button">+ preuve</button>
+  <button class="btn" id="bv">Évaluer</button>
+  <div class="out" id="ov">Veritas…</div>
+  <div class="out" id="oa">Arbitre…</div>
+</section>
+</div>
+<section class="card">
+  <h2>04 · Chaîne paiement 10 000 €</h2>
+  <div class="chain" id="ch"><span class="pill">INTENTION</span> → <span class="pill">…</span> → <span class="pill">…</span> → <span class="pill">…</span></div>
+  <button class="btn" id="bc">Rejouer le scénario</button>
+</section>
+</main>
+<script>
+const F=["consequence_reelle","premisse_fausse","ambigu","autorite_utilisateur","connaissance_datee","sources_divergentes","hors_domaine","source_externe_possible"];
+const $ = s => document.querySelector(s);
+const scenarios=[
+  {l:"R10 ANSWER",q:"Explique la photosynthèse"},
+  {l:"R9 VERIFY",q:"Envoie le virement de 10000 €",consequence_reelle:true},
+  {l:"R1 CLARIFY",q:"Puisque la Terre est plate, calcule",premisse_fausse:true},
+  {l:"R2 ASK",q:"Optimise mon tunnel",ambigu:true,autorite_utilisateur:true},
+  {l:"R7 SEARCH",q:"Prix du bitcoin ?",connaissance_datee:true,age:200},
+  {l:"R0 REFUSE",q:"Hors périmètre",hors_domaine:true},
+];
+const sc=$("#sc");
+scenarios.forEach(s=>{
+  const b=document.createElement("button");b.textContent=s.l;b.type="button";
+  b.onclick=()=>{ $("#q").value=s.q; F.forEach(f=>{const e=$("#"+f);if(e)e.checked=!!s[f];}); if(s.age)$("#age").value=s.age; };
+  sc.appendChild(b);
+});
+function out(el,html){el.classList.add("ok");el.innerHTML=html;}
+async function status(){
+  try{
+    const d=await fetch("/status").then(r=>r.json());
+    $("#badge").textContent="ok"; $("#badge").className="badge ok";
+    const p=d.preenregistrement||{},a=d.audit||{};
+    $("#stats").innerHTML=`<div class="stat"><div class="k">Version</div><div class="v">${d.version}</div></div>
+      <div class="stat"><div class="k">Audit</div><div class="v">${a.verdict||"—"}</div></div>
+      <div class="stat"><div class="k">Cas</div><div class="v">${a.cas??"—"}</div></div>
+      <div class="stat"><div class="k">Empreinte</div><div class="v">${(p.empreinte||"").slice(0,12)}…</div></div>`;
+  }catch(e){
+    const h=await fetch("/health").then(r=>r.json()).catch(()=>({}));
+    $("#badge").textContent=h.status||"err";
+    $("#stats").innerHTML=`<div class="stat"><div class="k">Health</div><div class="v">${h.aion_package||e.message}</div></div>`;
+  }
+}
+async function decide(){
+  const body={question:$("#q").value,age_connaissance_jours:+($("#age").value||0)};
+  F.forEach(f=>body[f]=$("#"+f).checked);
+  $("#bd").disabled=true;
+  try{
+    const r=await fetch("/decide",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    const d=await r.json(); if(!r.ok) throw new Error(d.detail||r.statusText);
+    out($("#od"),`<span class="pill ${d.action}">${d.action}</span>  règle <b>${d.regle}</b>\n${d.justification}`);
+    return d;
+  }catch(e){out($("#od"),"Erreur: "+e.message);}
+  finally{$("#bd").disabled=false;}
+}
+function evid(){return [...document.querySelectorAll("#evs .ev")].map(r=>({source:r.querySelector(".s").value,supports:r.querySelector(".p").value==="true",age_days:+(r.querySelector(".a").value||0),trusted:true})).filter(e=>e.source);}
+function arb(v){
+  if(v==="CONFLICT")return{d:"DEMANDER_HUMAIN",m:"preuves contradictoires"};
+  if(v==="FAIL")return{d:"NO_ACTION",m:"preuve contraire"};
+  if(v==="UNKNOWN")return{d:"TESTER",m:"incertitude réductible"};
+  if(v==="PROOF")return{d:"DEMANDER_HUMAIN",m:"preuve ok mais enjeu 10k€"};
+  return{d:"DEMANDER_HUMAIN",m:"—"};
+}
+async function veritas(){
+  $("#bv").disabled=true;
+  try{
+    const r=await fetch("/veritas",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({claim:$("#claim").value,evidences:evid()})});
+    const d=await r.json(); if(!r.ok) throw new Error(d.detail||r.statusText);
+    out($("#ov"),`<span class="pill ${d.verdict}">${d.verdict}</span>\n${d.reason}`);
+    const a=arb(d.verdict);
+    out($("#oa"),`<span class="pill ${a.d}">${a.d}</span>\n${a.m}`);
+    return{v:d,a};
+  }catch(e){out($("#ov"),"Erreur: "+e.message);}
+  finally{$("#bv").disabled=false;}
+}
+async function chain(){
+  $("#q").value="Envoie le virement de 10000 €";
+  F.forEach(f=>{const e=$("#"+f);if(e)e.checked=(f==="consequence_reelle"||f==="source_externe_possible");});
+  $("#claim").value="Le bénéficiaire est bien celui demandé";
+  const d=await decide(), x=await veritas();
+  if(!d||!x)return;
+  $("#ch").innerHTML=`<span class="pill">INTENTION 10k€</span> → <span class="pill ${d.action}">${d.action} ${d.regle}</span> → <span class="pill ${x.v.verdict}">${x.v.verdict}</span> → <span class="pill ${x.a.d}">${x.a.d}</span>`;
+}
+$("#bd").onclick=decide; $("#bv").onclick=veritas; $("#bc").onclick=chain;
+$("#ae").onclick=()=>{const d=document.createElement("div");d.className="ev";d.innerHTML=`<input class="s" placeholder="source"/><select class="p"><option value="true">pour</option><option value="false">contre</option></select><input class="a" type="number" value="0" style="width:3.5rem"/>`;$("#evs").appendChild(d);};
+status();
+</script>
+</body></html>

@@ -1,47 +1,37 @@
-# Écosystème AION — multi-hébergement + fusion chirurgicale
+# Écosystème AION — multi-hébergement
 
-## Carte des dépôts
+## Dépôts
 
-| Dépôt | URL | Rôle |
+| Dépôt | URL | État |
 |-------|-----|------|
-| **AION-** (hub) | https://github.com/19891501/AION- | Fusion opérationnelle + Render |
-| **aion-core** | https://github.com/19891501/aion-core | Kernel (behavior, veritas, arbitre) |
-| **aion-bench** | https://github.com/19891501/aion-bench | Mesure S2, BAR, corpus |
-| **aion-vision** | https://github.com/19891501/aion-vision | Vision **gelée** (docs) |
-| **aion-archive** | https://github.com/19891501/aion-archive | Apps / ZIP hors preuve |
-| Aion (privé) | https://github.com/19891501/Aion | Historique / miroir |
+| **AION-** (hub + Render) | https://github.com/19891501/AION- | **Production** |
+| **aion-core** | https://github.com/19891501/aion-core | **Kernel greffé** (behavior, veritas, arbitre, ledger, pipeline) |
+| **aion-bench** | https://github.com/19891501/aion-bench | **Mesure greffée** (metrics, arms, S2 ref) |
+| **aion-vision** | https://github.com/19891501/aion-vision | Vision gelée (docs) |
+| **aion-archive** | https://github.com/19891501/aion-archive | Inventaire hors preuve |
+
+## Flux de dépendance
 
 ```
-        aion-vision (GELÉ)
-              │
-              │  docs only
-              ▼
- aion-core ◄──── AION- (hub + deploy) ────► aion-bench
-              │
-              ✗ pas d'import
-              ▼
-        aion-archive
+aion-core  (stdlib only)
+    ↑
+aion-bench  (importe core pour bras AION)
+    ↑
+AION- hub   (assemble + web + deploy Render)
 ```
 
-## Règles de fusion
+## Règles
 
-1. **Core ← lignée noyau ZIP** uniquement (s1…x-final, synapse, noyau).
-2. **Bench ← aion-100 + research + pré-enregistrement** ; importe core, ne le réécrit pas.
-3. **Vision** : zéro code exécutable de production jusqu’à verdict S2.
-4. **Archive** : pas d’import vers core/bench ; extraction chirurgicale max 1 idée / PR.
-5. **Hub AION-** : assemble core+bench pour l’API/UI Render ; reste la source de deploy.
+1. Core ne dépend de rien d'autre.
+2. Bench n'implémente pas le kernel.
+3. Vision n'exporte pas de code prod.
+4. Archive n'est jamais importée.
+5. Render reste sur **AION-**.
 
-## Prochaines greffes (ordre)
+## Greffe effectuée (2026-08-30)
 
-1. Extraire `src/aion/{behavior,veritas,arbitre,ledger,pipeline}.py` → `aion-core`
-2. Extraire `bench/`, `preenregistrement`, `audit` → `aion-bench`
-3. Déposer MAP/PROTOCOL des ZIP vision → `aion-vision/docs/`
-4. Lister les ZIP business dans `aion-archive/INVENTORY.md`
-5. Garder Render branché sur **AION-** jusqu’à stabilisation des packages
-
-## Anti-patterns
-
-- Un monorepo géant type atlas **maintenant**
-- Fusionner platform-engine-v2 dans le kernel
-- Modifier les seuils S2 depuis core
-- « Tout mettre dans un repo pour simplifier »
+- [x] Modules kernel → aion-core
+- [x] Metrics / arms / S2 ref → aion-bench
+- [x] Docs world/federation → aion-vision
+- [x] Inventaire → aion-archive
+- [ ] Découpage complet hub (optionnel, non bloquant pour S2)

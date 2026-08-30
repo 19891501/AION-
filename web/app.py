@@ -1,4 +1,4 @@
-"""AION Web API + interface."""
+"""AION Web API + interface décision."""
 
 from __future__ import annotations
 
@@ -26,6 +26,7 @@ try:
     from aion.ledger import Ledger
     from aion.preenregistrement import charger as charger_pre, empreinte
     from aion.veritas import Evidence, check
+    from aion.pipeline import run_pipeline
 
     AION_OK = True
     _IMPORT_ERROR = ""
@@ -34,19 +35,8 @@ except ImportError as exc:
     AION_OK = False
     _IMPORT_ERROR = str(exc)
 
-app = FastAPI(
-    title="AION",
-    description="Kernel de confiance déterministe. La preuve décide, pas l'intention.",
-    version=__version__,
-)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
+app = FastAPI(title="AION", description="La preuve décide, pas l'intention.", version=__version__)
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 _STATIC = Path(__file__).resolve().parent / "static"
 if _STATIC.is_dir():
     app.mount("/static", StaticFiles(directory=str(_STATIC)), name="static")
@@ -54,10 +44,7 @@ if _STATIC.is_dir():
 
 def _require_aion() -> None:
     if not AION_OK:
-        raise HTTPException(
-            status_code=503,
-            detail=f"package aion incomplet: {_IMPORT_ERROR}",
-        )
+        raise HTTPException(503, f"package aion incomplet: {_IMPORT_ERROR}")
 
 
 def _ledger():
@@ -73,12 +60,7 @@ def root():
     index = _STATIC / "index.html"
     if index.is_file():
         return FileResponse(index)
-    return {
-        "service": "AION",
-        "version": __version__,
-        "aion_package": "ok" if AION_OK else f"missing: {_IMPORT_ERROR}",
-        "docs": "/docs",
-    }
+    return {"service": "AION", "version": __version__, "docs": "/docs"}
 
 
 @app.get("/api")
@@ -88,8 +70,7 @@ def api_info() -> dict[str, Any]:
         "version": __version__,
         "aion_package": "ok" if AION_OK else f"missing: {_IMPORT_ERROR}",
         "docs": "/docs",
-        "health": "/health",
-        "endpoints": ["/status", "/audit", "/decide", "/preenreg"],
+        "endpoints": ["/status", "/audit", "/decide", "/veritas", "/pipeline"],
     }
 
 
@@ -123,18 +104,14 @@ def status() -> dict[str, Any]:
             "bloquants": len(rapport.bloquants),
             "alertes": len(rapport.alertes),
         },
-        "env": {
-            "provider_default": os.environ.get("AION_PROVIDER", "local"),
-            "render": bool(os.environ.get("RENDER")),
-        },
+        "env": {"render": bool(os.environ.get("RENDER"))},
     }
 
 
 @app.get("/preenreg")
 def preenreg() -> dict[str, Any]:
     _require_aion()
-    pre = charger_pre()
-    return {"empreinte": empreinte(), "contenu": pre}
+    return {"empreinte": empreinte(), "contenu": charger_pre()}
 
 
 @app.get("/audit")
@@ -160,26 +137,9 @@ class DecideIn(BaseModel):
 @app.post("/decide")
 def decide(body: DecideIn) -> dict[str, Any]:
     _require_aion()
-    sit = Situation(
-        question=body.question,
-        premisse_fausse=body.premisse_fausse,
-        ambigu=body.ambigu,
-        consequence_reelle=body.consequence_reelle,
-        connaissance_datee=body.connaissance_datee,
-        age_connaissance_jours=body.age_connaissance_jours,
-        source_externe_possible=body.source_externe_possible,
-        sources_divergentes=body.sources_divergentes,
-        autorite_utilisateur=body.autorite_utilisateur,
-        hors_domaine=body.hors_domaine,
-        fait_cle=body.fait_cle,
-    )
+    sit = Situation(**body.model_dump())
     choix = selectionner(sit, _ledger())
-    return {
-        "action": choix.action.value,
-        "regle": choix.regle,
-        "justification": choix.motif,
-        "question": body.question,
-    }
+    return {"action": choix.action.value, "regle": choix.regle, "justification": choix.motif, "question": body.question}
 
 
 class VeritasIn(BaseModel):
@@ -191,22 +151,30 @@ class VeritasIn(BaseModel):
 @app.post("/veritas")
 def veritas(body: VeritasIn) -> dict[str, Any]:
     _require_aion()
-    evs = []
-    for e in body.evidences:
-        try:
-            evs.append(
-                Evidence(
-                    source=str(e.get("source", "")),
-                    supports=bool(e.get("supports", True)),
-                    age_days=int(e.get("age_days", 0)),
-                    trusted=bool(e.get("trusted", True)),
-                )
-            )
-        except Exception as exc:
-            raise HTTPException(400, f"evidence invalide: {exc}") from exc
+    evs = [Evidence(source=str(e.get("source", "")), supports=bool(e.get("supports", True)), age_days=int(e.get("age_days", 0)), trusted=bool(e.get("trusted", True))) for e in body.evidences]
     ruling = check(body.claim, evs, max_age_days=body.max_age_days)
-    return {
-        "claim": body.claim,
-        "verdict": ruling.verdict.value,
-        "reason": ruling.reason,
-    }
+    return {"claim": body.claim, "verdict": ruling.verdict.value, "reason": ruling.reason}
+
+
+class PipelineIn(BaseModel):
+    question: str = Field(..., min_length=1, max_length=2000)
+    premisse_fausse: bool = False
+    ambigu: bool = False
+    consequence_reelle: bool = False
+    connaissance_datee: bool = False
+    age_connaissance_jours: int = 0
+    source_externe_possible: bool = True
+    sources_divergentes: bool = False
+    autorite_utilisateur: bool = False
+    hors_domaine: bool = False
+    fait_cle: str = ""
+    claim: str | None = None
+    evidences: list[dict] = Field(default_factory=list)
+    stake: dict | None = None
+
+
+@app.post("/pipeline")
+def pipeline(body: PipelineIn) -> dict:
+    _require_aion()
+    flags = body.model_dump(exclude={"claim", "evidences", "stake", "question"})
+    return run_pipeline(question=body.question, flags=flags, claim=body.claim, evidences=body.evidences or None, stake=body.stake).to_dict()

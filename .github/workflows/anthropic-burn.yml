@@ -30,25 +30,23 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Deps
+      - name: Install package
         run: |
-          pip install -e ".[anthropic]" || pip install anthropic pytest
-          pip install anthropic
+          pip install -U pip
+          pip install -e ".[anthropic]"
+          python -c "from aion.providers import charger; print('import OK', charger)"
 
       - name: Preflight
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           AION_MODEL: ${{ inputs.modele }}
         run: |
-          export PYTHONPATH=src
           python - <<'PY'
           import os, sys
           key = os.environ.get("ANTHROPIC_API_KEY", "")
@@ -67,7 +65,6 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
-          export PYTHONPATH=src
           mkdir -p results/cache_anthropic results/ci_micro
           python -m aion bench --provider anthropic \
             --modele "${{ inputs.modele }}" --micro \
@@ -82,7 +79,6 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
-          export PYTHONPATH=src
           mkdir -p results/cache_anthropic results/ci_etendue
           python -m aion bench --provider anthropic \
             --modele "${{ inputs.modele }}" \
@@ -101,6 +97,5 @@ jobs:
           path: |
             results/ci_micro/
             results/ci_etendue/
-            results/cache_anthropic/
           if-no-files-found: warn
           retention-days: 14

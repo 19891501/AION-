@@ -1,13 +1,14 @@
-# Manifeste des archives
+# Manifeste des archives → multi-repo
 
-~30 archives lues et fusionnées dans ce dépôt unique.
+| ZIP / famille | Destination |
+|---------------|-------------|
+| aion-noyau-s1 → x-final, euros, bilan, boite-a-outils | **aion-core** + **aion-bench** |
+| synapse-veritas, noyau, aion-core | **aion-core** |
+| aion-100, research, test-complet | **aion-bench** |
+| atlas, world, federation, agora, arene, CRDT, sios, reality-monitor | **aion-vision** (docs) |
+| d2c, b2b, platform, ecole, dsk, coeur, session, solus, nescio, silence | **aion-archive** |
+| fermi, constat | archive (réf. optionnelle) |
 
-## Intégré v0.1.0
+Hub de fusion et deploy : **AION-**
 
-aion-noyau-s1/marteau/extraction/audit, aion-100, synapse-veritas, arbitre, noyau, aion-euros, boite-a-outils-rigueur, aion-x-final.
-
-## Vision gelée jusqu'à preuve S2
-
-atlas, world, federation, CRDT, agora, ecole, research, platform, d2c/b2b, solus, nescio, silence.
-
-Raison : AION doit d'abord prouver qu'il mesure quelque chose.
+Raison : *Mesurer avant d’amplifier.*

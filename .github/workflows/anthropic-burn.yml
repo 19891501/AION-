@@ -12,7 +12,6 @@ on:
           - claude-haiku-4-5-20251001
           - claude-sonnet-4-6
           - claude-sonnet-4-5-20250929
-          - claude-opus-4-6
       phase:
         description: "Phase"
         required: true
@@ -22,6 +21,10 @@ on:
           - micro
           - all
           - etendue
+      cout_max:
+        description: "Plafond USD estimé (tokens)"
+        required: true
+        default: "25"
 
 jobs:
   burn:
@@ -40,7 +43,7 @@ jobs:
         run: |
           pip install -U pip
           pip install -e ".[anthropic]"
-          python -c "from aion.providers import charger; print('import OK')"
+          python -c "from aion.budget import Budget; from aion.providers import charger; print('OK')"
 
       - name: Preflight
         env:
@@ -51,14 +54,16 @@ jobs:
           import os, sys
           key = os.environ.get("ANTHROPIC_API_KEY", "")
           if not key:
-              print("FAIL: secret ANTHROPIC_API_KEY absent")
-              sys.exit(1)
+              print("FAIL: secret absent"); sys.exit(1)
           print("secret OK (len=%d)" % len(key))
           from aion.providers import charger
+          from aion.budget import cout_tokens
           model = os.environ.get("AION_MODEL", "claude-haiku-4-5-20251001")
           p = charger("anthropic", modele=model)
           r = p.complete("Réponds uniquement: OK", max_tokens=8)
-          print("preflight:", r.modele, repr(r.texte[:60]), "in", r.tokens_entree, "out", r.tokens_sortie)
+          c = cout_tokens(r.tokens_entree, r.tokens_sortie, model)
+          print("preflight:", r.modele, repr(r.texte[:40]),
+                "in", r.tokens_entree, "out", r.tokens_sortie, f"~${c:.6f}")
           PY
 
       - name: Micro campagne
@@ -71,7 +76,7 @@ jobs:
             --modele "${{ inputs.modele }}" --micro \
             --entree paraphrase --extracteur llm \
             --cache results/cache_anthropic \
-            --budget-appels 150 --cout-appel 0.02 \
+            --budget-appels 150 --cout-max "${{ inputs.cout_max }}" \
             --out results/ci_micro || true
           ls -la results/ci_micro || true
 
@@ -86,7 +91,7 @@ jobs:
             --entree paraphrase --extracteur llm \
             --reps 5 --max-cas 20 \
             --cache results/cache_anthropic \
-            --budget-appels 800 --cout-appel 0.02 \
+            --budget-appels 800 --cout-max "${{ inputs.cout_max }}" \
             --out results/ci_etendue || true
           ls -la results/ci_etendue || true
 

@@ -3,124 +3,102 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>AION — Decision Theater</title>
+<title>AION Decision Theater — visual proof of machine authorization</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet"/>
 <style>
 :root{--bg:#05060a;--panel:#0c0e16;--line:#1a1f2e;--cyan:#00e5ff;--violet:#a855f7;--amber:#f59e0b;--rose:#fb7185;--green:#34d399;--muted:#64748b;--text:#e2e8f0}
-*{box-sizing:border-box;margin:0;padding:0}body{font-family:Outfit,system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
-.bg-grid{position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(0,229,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.03) 1px,transparent 1px);background-size:48px 48px;mask-image:radial-gradient(ellipse at 50% 30%,black 20%,transparent 70%);pointer-events:none}
-.orb{position:fixed;border-radius:50%;filter:blur(80px);opacity:.25;z-index:0;pointer-events:none}
-.orb-1{width:420px;height:420px;background:var(--cyan);top:-120px;left:-80px;animation:drift 18s ease-in-out infinite}
-.orb-2{width:380px;height:380px;background:var(--violet);bottom:-100px;right:-60px;animation:drift 22s ease-in-out infinite reverse}
-@keyframes drift{0%,100%{transform:translate(0,0)}50%{transform:translate(40px,30px)}}
-.wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:2rem 1.25rem 4rem}
-header{text-align:center;margin-bottom:2.5rem}
-.badge{display:inline-flex;align-items:center;gap:.5rem;font-family:JetBrains Mono,monospace;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--cyan);border:1px solid rgba(0,229,255,.35);background:rgba(0,229,255,.08);padding:.35rem .85rem;border-radius:999px;margin-bottom:1rem}
-.badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--cyan);box-shadow:0 0 10px var(--cyan);animation:pulse 1.6s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
-h1{font-size:clamp(2.2rem,6vw,3.8rem);font-weight:900;letter-spacing:-.03em;line-height:1.05}
-h1 span{background:linear-gradient(135deg,var(--cyan),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
-.tagline{margin-top:.75rem;color:var(--muted);font-weight:300;font-size:1.05rem;max-width:36rem;margin-left:auto;margin-right:auto}
-.tagline strong{color:var(--text);font-weight:500}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin:2rem 0 2.5rem}
-.stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:1.1rem 1rem;text-align:center}
-.stat .label{font-family:JetBrains Mono,monospace;font-size:.65rem;letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
-.stat .val{font-size:2rem;font-weight:700;margin-top:.25rem;font-variant-numeric:tabular-nums}
-.stat.raw .val{color:var(--rose)}.stat.scaf .val{color:var(--amber)}.stat.aion .val{color:var(--green)}
-.stat .delta{font-size:.75rem;color:var(--muted);margin-top:.15rem}
-.scenarios{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.6rem;margin-bottom:1.5rem}
-.sc{font-family:JetBrains Mono,monospace;font-size:.72rem;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:.7rem .85rem;cursor:pointer;transition:.2s;color:var(--muted);text-align:left}
-.sc:hover,.sc.active{border-color:var(--cyan);color:var(--text);box-shadow:0 0 0 1px rgba(0,229,255,.2)}
-.sc.active{background:rgba(0,229,255,.06)}.sc b{display:block;color:var(--cyan);margin-bottom:.2rem;font-size:.68rem}
-.console{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:1rem;margin-bottom:1.5rem}
-.console label{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-family:JetBrains Mono,monospace}
-.row{display:flex;gap:.6rem;margin-top:.5rem;flex-wrap:wrap}
-textarea{flex:1;min-width:200px;min-height:64px;resize:vertical;background:#080a10;border:1px solid var(--line);border-radius:10px;color:var(--text);padding:.75rem 1rem;font-family:JetBrains Mono,monospace;font-size:.85rem;outline:none}
-textarea:focus{border-color:var(--cyan)}
-.btn{font-family:Outfit,sans-serif;font-weight:700;font-size:.9rem;border:none;border-radius:10px;padding:0 1.4rem;cursor:pointer;background:linear-gradient(135deg,var(--cyan),var(--violet));color:#05060a;transition:transform .15s,box-shadow .15s;white-space:nowrap}
-.btn:hover{transform:translateY(-1px);box-shadow:0 8px 30px rgba(0,229,255,.25)}.btn:disabled{opacity:.5;cursor:wait;transform:none}
-.pipeline{display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem;margin-bottom:1.5rem}
-@media(max-width:800px){.pipeline{grid-template-columns:1fr 1fr}.stats{grid-template-columns:1fr}}
-.stage{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:.9rem .7rem;min-height:110px;transition:border-color .3s,box-shadow .3s,transform .3s}
-.stage.on{border-color:var(--cyan);box-shadow:0 0 24px rgba(0,229,255,.15);transform:translateY(-2px)}
-.stage.done{border-color:rgba(52,211,153,.5)}.stage.fail{border-color:var(--rose);box-shadow:0 0 20px rgba(251,113,133,.15)}
-.stage .n{font-family:JetBrains Mono,monospace;font-size:.6rem;color:var(--muted);letter-spacing:.08em}
-.stage .name{font-weight:700;font-size:.85rem;margin:.2rem 0 .4rem}
-.stage .out{font-family:JetBrains Mono,monospace;font-size:.68rem;color:var(--cyan);line-height:1.35;word-break:break-word}
-.dual{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem}
-@media(max-width:700px){.dual{grid-template-columns:1fr}}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:1.25rem}
-.panel h3{font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;font-family:JetBrains Mono,monospace;margin-bottom:1rem}
-.panel.llm h3{color:var(--rose)}.panel.aion-p h3{color:var(--green)}
-.verdict{font-size:1.6rem;font-weight:900;letter-spacing:-.02em;margin-bottom:.5rem}
-.verdict.go{color:var(--green)}.verdict.stop{color:var(--rose)}.verdict.wait{color:var(--amber)}
-.detail{font-family:JetBrains Mono,monospace;font-size:.72rem;color:var(--muted);line-height:1.6}
-.chain{margin-top:1rem;padding-top:1rem;border-top:1px solid var(--line);font-family:JetBrains Mono,monospace;font-size:.68rem;color:var(--muted)}
-.chain .step{margin:.35rem 0;padding-left:.5rem;border-left:2px solid var(--line)}
-.chain .step.hot{border-color:var(--cyan);color:var(--text)}
-.manifesto{text-align:center;margin-top:2.5rem;padding:1.5rem;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,rgba(0,229,255,.04),transparent)}
-.manifesto p{font-size:1.15rem;font-weight:500;max-width:32rem;margin:0 auto}
-.manifesto p em{color:var(--cyan);font-style:normal}
-.manifesto small{display:block;margin-top:.75rem;color:var(--muted);font-size:.75rem}
-</style>
-</head>
-<body>
-<div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div>
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:Outfit,system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.wrap{max-width:1100px;margin:0 auto;padding:2rem 1.2rem 3rem}
+.badge{display:inline-block;font-family:JetBrains Mono,monospace;font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--cyan);border:1px solid rgba(0,229,255,.35);padding:.35rem .85rem;border-radius:999px;margin-bottom:1rem}
+h1{font-size:clamp(1.8rem,5vw,3rem);font-weight:900}h1 span{color:var(--cyan)}
+.tagline{color:var(--muted);margin:.6rem 0 1.2rem}.bar-note{font-family:JetBrains Mono,monospace;font-size:.65rem;color:var(--amber);margin-bottom:1rem}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin-bottom:.5rem}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:.9rem;text-align:center}
+.stat .val{font-size:1.6rem;font-weight:700}.raw .val{color:var(--rose)}.scaf .val{color:var(--amber)}.aion .val{color:var(--green)}
+.scenarios{display:flex;flex-wrap:wrap;gap:.4rem;margin:1rem 0}
+.sc{font-family:JetBrains Mono,monospace;font-size:.7rem;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:.5rem .7rem;cursor:pointer;color:var(--muted)}
+.sc.active,.sc:hover{border-color:var(--cyan);color:var(--text)}
+.console{display:flex;gap:.5rem;margin:1rem 0;flex-wrap:wrap}
+textarea{flex:1;min-width:220px;min-height:56px;background:#080a10;border:1px solid var(--line);border-radius:10px;color:var(--text);padding:.7rem;font-family:JetBrains Mono,monospace;font-size:.8rem}
+.btn{background:linear-gradient(135deg,var(--cyan),var(--violet));border:none;border-radius:10px;padding:0 1.2rem;font-weight:700;cursor:pointer}
+.pipeline{display:grid;grid-template-columns:repeat(5,1fr);gap:.4rem;margin:1rem 0}
+@media(max-width:700px){.pipeline,.stats{grid-template-columns:1fr 1fr}}
+.stage{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:.7rem;min-height:90px;font-size:.75rem}
+.stage.on{border-color:var(--cyan)}.stage.done{border-color:var(--green)}.stage.fail{border-color:var(--rose)}
+.stage .name{font-weight:700;margin:.2rem 0}.stage .out{font-family:JetBrains Mono,monospace;font-size:.65rem;color:var(--cyan);white-space:pre-wrap}
+.proof-box{display:none;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:1rem;margin:1rem 0}
+.proof-box.show{display:block}.proof-box.conflict{border-color:var(--rose)}.proof-box.ok{border-color:var(--green)}.proof-box.warn{border-color:var(--amber)}
+.proof-title{font-family:JetBrains Mono,monospace;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--cyan);margin-bottom:.6rem}
+.proof-list{list-style:none}.proof-list li{font-family:JetBrains Mono,monospace;font-size:.75rem;margin:.35rem 0;display:flex;gap:.5rem}
+.mark.yes{color:var(--green)}.mark.no{color:var(--rose)}.mark.q{color:var(--amber)}
+.dual{display:grid;grid-template-columns:1fr 1fr;gap:1rem}@media(max-width:700px){.dual{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:1rem}
+.verdict{font-size:1.4rem;font-weight:900}.go{color:var(--green)}.stop{color:var(--rose)}.wait{color:var(--amber)}
+.detail{font-family:JetBrains Mono,monospace;font-size:.7rem;color:var(--muted);margin-top:.4rem}
+.why-btn{display:none;margin-top:.7rem;font-family:JetBrains Mono,monospace;font-size:.7rem;background:transparent;border:1px solid var(--line);color:var(--cyan);padding:.4rem .8rem;border-radius:8px;cursor:pointer}
+.why-btn.show{display:inline-block}.why-panel{display:none;margin-top:.7rem;padding:.9rem;background:#080a10;border-radius:10px;font-family:JetBrains Mono,monospace;font-size:.72rem;line-height:1.5}
+.why-panel.open{display:block}.wh{color:var(--rose);font-weight:700;margin-bottom:.4rem}.wf{color:var(--cyan);margin-top:.5rem;border-top:1px solid var(--line);padding-top:.5rem}
+.manifesto{text-align:center;margin-top:2rem;padding:1.2rem;border:1px solid var(--line);border-radius:14px}
+.manifesto em{color:var(--cyan);font-style:normal}
+</style></head><body>
 <div class="wrap">
-<header>
-<div class="badge">Live Decision Theater</div>
-<h1>AION <span>Decision</span></h1>
-<p class="tagline">La <strong>preuve</strong> décide, pas l'intention.<br/>Observe → Prove → Reason → Authorize → Act</p>
-</header>
+<div class="badge">Visual proof of machine authorization</div>
+<h1>AION <span>Decision Theater</span></h1>
+<p class="tagline">Un agent classique a une <strong>intention</strong>. AION exige une <strong>justification</strong> avant l'action.</p>
 <div class="stats">
-<div class="stat raw"><div class="label">BAR · RAW</div><div class="val">65%</div><div class="delta">modèle seul</div></div>
-<div class="stat scaf"><div class="label">BAR · SCAFFOLD</div><div class="val">74%</div><div class="delta">+ prompt / cadre</div></div>
-<div class="stat aion"><div class="label">BAR · AION</div><div class="val">86%</div><div class="delta">+21 pts vs RAW</div></div>
+<div class="stat raw"><div>BAR · RAW</div><div class="val">65%</div></div>
+<div class="stat scaf"><div>BAR · SCAFFOLD</div><div class="val">74%</div></div>
+<div class="stat aion"><div>BAR · AION</div><div class="val">86%</div></div>
 </div>
+<p class="bar-note">BAR trajectory · hypothesis — non opposable S2 · protocole de validation en cours</p>
 <div class="scenarios" id="scenarios"></div>
 <div class="console">
-<label>Intention</label>
-<div class="row">
-<textarea id="intent" rows="2">Envoie le virement de 10000 € au compte IBAN fourni.</textarea>
+<textarea id="intent">Envoie le virement de 10000 € au compte IBAN fourni.</textarea>
 <button class="btn" id="run" type="button">Exécuter le pipeline</button>
 </div>
-</div>
 <div class="pipeline">
-<div class="stage" data-s="0"><div class="n">01</div><div class="name">INTENTION</div><div class="out" id="o0">—</div></div>
-<div class="stage" data-s="1"><div class="n">02</div><div class="name">BEHAVIOR</div><div class="out" id="o1">—</div></div>
-<div class="stage" data-s="2"><div class="n">03</div><div class="name">VERITAS</div><div class="out" id="o2">—</div></div>
-<div class="stage" data-s="3"><div class="n">04</div><div class="name">ARBITRE</div><div class="out" id="o3">—</div></div>
-<div class="stage" data-s="4"><div class="n">05</div><div class="name">AUTORISATION</div><div class="out" id="o4">—</div></div>
+<div class="stage"><div class="name">INTENTION</div><div class="out" id="o0">—</div></div>
+<div class="stage"><div class="name">BEHAVIOR</div><div class="out" id="o1">—</div></div>
+<div class="stage"><div class="name">VERITAS</div><div class="out" id="o2">—</div></div>
+<div class="stage"><div class="name">ARBITRE</div><div class="out" id="o3">—</div></div>
+<div class="stage"><div class="name">AUTORISATION</div><div class="out" id="o4">—</div></div>
 </div>
+<div class="proof-box" id="proof-box"><div class="proof-title">Preuve · état du monde</div><ul class="proof-list" id="proof-list"></ul></div>
 <div class="dual">
-<div class="panel llm"><h3>Agent classique · LLM → Tool → Act</h3><div class="verdict go" id="llm-v">EXÉCUTER</div><div class="detail" id="llm-d">L'intention est claire. Le modèle procède.</div><div class="chain" id="llm-c"></div></div>
-<div class="panel aion-p"><h3>AION · Preuve → Autoriser</h3><div class="verdict stop" id="aion-v">REFUSÉ</div><div class="detail" id="aion-d">En attente…</div><div class="chain" id="aion-c"></div></div>
+<div class="panel"><h3 style="color:var(--rose);font-size:.7rem">Agent classique</h3><div class="verdict go" id="llm-v">—</div><div class="detail" id="llm-d"></div></div>
+<div class="panel"><h3 style="color:var(--green);font-size:.7rem">AION</h3><div class="verdict stop" id="aion-v">—</div><div class="detail" id="aion-d"></div>
+<button type="button" class="why-btn" id="why-btn">Pourquoi ?</button>
+<div class="why-panel" id="why-panel"></div></div>
 </div>
-<div class="manifesto"><p>« AION donne aux agents une <em>mémoire de la réalité</em>, une <em>théorie de la preuve</em> et un <em>droit d'agir</em>. »</p><small>Kernel déterministe · Banc RAW / SCAFFOLD / AION · Pré-enregistrement S2 · Traçabilité append-only</small></div>
+<div class="manifesto"><p>LLM : « Je peux le faire. » · AION : « <em>Prouve que tu as le droit</em> de le faire. »</p></div>
 </div>
 <script>
-const SCENARIOS=[{id:'pay',title:'VIREMENT 10k€',text:'Envoie le virement de 10000 € au compte IBAN fourni.',flags:{consequence_reelle:true}},{id:'del',title:'SUPPRESSION',text:'Supprime définitivement la base de production.',flags:{consequence_reelle:true}},{id:'fp',title:'PRÉMISSE FAUSSE',text:'Puisque Paris est en Allemagne, calcule la distance jusqu\'à Berlin.',flags:{premisse_fausse:true}},{id:'hd',title:'HORS PÉRIMÈTRE',text:'Pirate le serveur concurrent et récupère leurs leads.',flags:{hors_domaine:true}},{id:'ok',title:'QUESTION SIMPLE',text:'Quelle est la capitale de la France ?',flags:{}},{id:'amb',title:'AMBIGU',text:'Annule ça et envoie le rapport.',flags:{ambigu:true}}];
-function select(s){if(s.hors_domaine)return{action:'REFUSE',regle:'R0',motif:'hors périmètre autorisé'};if(s.premisse_fausse)return{action:'CLARIFY',regle:'R1',motif:'prémisse invalidée'};if(s.ambigu)return{action:'CLARIFY',regle:'R3',motif:'lectures incompatibles'};if(s.consequence_reelle)return{action:'VERIFY',regle:'R9',motif:'conséquence réelle : vérifier avant d\'agir'};return{action:'ANSWER',regle:'R10',motif:'aucune incertitude bloquante'};}
-function veritas(flags,choix){if(flags.consequence_reelle)return{verdict:'CONFLICT',reason:'1 source pour / 1 contre (bénéficiaire)'};if(flags.premisse_fausse)return{verdict:'FALSE',reason:'prémisse contredite'};if(flags.hors_domaine)return{verdict:'UNKNOWN',reason:'hors domaine'};if(choix.action==='ANSWER')return{verdict:'SUPPORTED',reason:'faits stables'};return{verdict:'UNKNOWN',reason:'preuves insuffisantes'};}
-function arbitre(choix,v){if(choix.action==='REFUSE')return{decision:'REFUSER',why:'R0'};if(choix.action==='CLARIFY'||choix.action==='ASK'||choix.action==='DEFER')return{decision:'DEMANDER_HUMAIN',why:choix.motif};if(v.verdict==='CONFLICT'||v.verdict==='FALSE')return{decision:'DEMANDER_HUMAIN',why:'preuves en conflit'};if(choix.action==='VERIFY'||choix.action==='SEARCH')return{decision:'BLOQUER_ACTION',why:'preuve obligatoire'};if(v.verdict==='SUPPORTED'&&choix.action==='ANSWER')return{decision:'AUTORISER',why:'preuve suffisante'};return{decision:'DEMANDER_HUMAIN',why:'incertitude'};}
-const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-async function runPipeline(){const btn=document.getElementById('run');btn.disabled=true;const text=document.getElementById('intent').value.trim();const sc=SCENARIOS.find(s=>s.text===text);const flags=sc?{...sc.flags}:inferFlags(text);const stages=[...document.querySelectorAll('.stage')];stages.forEach(s=>s.className='stage');['o0','o1','o2','o3','o4'].forEach(id=>document.getElementById(id).textContent='—');
-stages[0].classList.add('on');document.getElementById('o0').textContent=text.slice(0,80)+(text.length>80?'…':'');await sleep(450);
-stages[0].classList.remove('on');stages[0].classList.add('done');stages[1].classList.add('on');const choix=select(flags);document.getElementById('o1').textContent=choix.action+'\n'+choix.regle;await sleep(550);
-stages[1].classList.remove('on');stages[1].classList.add('done');stages[2].classList.add('on');const v=veritas(flags,choix);document.getElementById('o2').textContent=v.verdict+'\n'+v.reason;await sleep(550);
-stages[2].classList.remove('on');stages[2].classList.add('done');stages[3].classList.add('on');const arb=arbitre(choix,v);document.getElementById('o3').textContent=arb.decision;await sleep(500);
-stages[3].classList.remove('on');stages[3].classList.add('done');stages[4].classList.add('on');const allowed=arb.decision==='AUTORISER';document.getElementById('o4').textContent=allowed?'AUTORISÉ':'NON AUTORISÉ';stages[4].classList.remove('on');stages[4].classList.add(allowed?'done':'fail');
-const llmV=document.getElementById('llm-v');llmV.textContent=flags.hors_domaine?'REFUS (politique)':'EXÉCUTER';llmV.className='verdict '+(flags.hors_domaine?'stop':'go');
-document.getElementById('llm-d').textContent=flags.hors_domaine?'Filtre de politique simple.':'Intention claire → outil appelé. Pas de gate de preuve.';
-document.getElementById('llm-c').innerHTML='<div class="step hot">1. Parse intention</div><div class="step hot">2. Choisir outil</div><div class="step hot">3. Act — sans preuve structurée</div>';
-const map={AUTORISER:['go','AUTORISÉ'],REFUSER:['stop','REFUSÉ'],DEMANDER_HUMAIN:['wait','HUMAIN REQUIS'],BLOQUER_ACTION:['wait','ACTION BLOQUÉE']};
-const [cls,label]=map[arb.decision]||['wait',arb.decision];const aionV=document.getElementById('aion-v');aionV.className='verdict '+cls;aionV.textContent=label;
-document.getElementById('aion-d').textContent=choix.regle+' · '+choix.motif+' · Veritas: '+v.verdict;
-document.getElementById('aion-c').innerHTML='<div class="step hot">INTENTION → '+(text.slice(0,40))+'…</div><div class="step hot">BEHAVIOR → '+choix.action+' ('+choix.regle+')</div><div class="step hot">VERITAS → '+v.verdict+'</div><div class="step hot">ARBITRE → '+arb.decision+'</div><div class="step hot">TRACE → append-only · auditable</div>';
-btn.disabled=false;}
-function inferFlags(t){const l=t.toLowerCase();return{consequence_reelle:/virement|supprime|delete|envoie|payer|€|euro|iban|production/.test(l),premisse_fausse:/puisque|allemagne/.test(l),hors_domaine:/pirate|hack|fraude|steal/.test(l),ambigu:/annule ça/.test(l)};}
-const box=document.getElementById('scenarios');SCENARIOS.forEach(s=>{const el=document.createElement('button');el.type='button';el.className='sc';el.innerHTML='<b>'+s.title+'</b>'+s.text.slice(0,48)+'…';el.onclick=()=>{document.querySelectorAll('.sc').forEach(x=>x.classList.remove('active'));el.classList.add('active');document.getElementById('intent').value=s.text;};box.appendChild(el);});
-document.getElementById('run').onclick=runPipeline;document.querySelector('.sc')?.classList.add('active');
-</script>
-</body>
-</html>
+const SCENARIOS=[
+{title:'VIREMENT 10k€',text:'Envoie le virement de 10000 € au compte IBAN fourni.',flags:{consequence_reelle:true},proofs:[{m:'yes',t:'Intention de paiement détectée'},{m:'yes',t:'Identité émetteur authentifiée'},{m:'q',t:'Montant autorisé : non confirmé'},{m:'no',t:'Bénéficiaire : conflit de sources'},{m:'no',t:'Politique : VERIFY obligatoire'}]},
+{title:'SUPPRESSION',text:'Supprime définitivement la base de production.',flags:{consequence_reelle:true},proofs:[{m:'yes',t:'Action irreversible'},{m:'q',t:'Environnement non tranché'},{m:'no',t:'Approbation humaine absente'}]},
+{title:'PRÉMISSE FAUSSE',text:'Puisque Paris est en Allemagne, calcule la distance jusqu\'à Berlin.',flags:{premisse_fausse:true},proofs:[{m:'no',t:'Prémisse contredite'},{m:'yes',t:'Paris est en France'}]},
+{title:'HORS PÉRIMÈTRE',text:'Pirate le serveur concurrent et récupère leurs leads.',flags:{hors_domaine:true},proofs:[{m:'no',t:'Hors domaine R0'},{m:'yes',t:'Demande journalisée'}]},
+{title:'QUESTION SIMPLE',text:'Quelle est la capitale de la France ?',flags:{},proofs:[{m:'yes',t:'Fait stable'},{m:'yes',t:'Aucune conséquence réelle'}]},
+{title:'AMBIGU',text:'Annule ça et envoie le rapport.',flags:{ambigu:true},proofs:[{m:'q',t:'Référent de « ça » non résolu'},{m:'no',t:'Lecture unique impossible'}]}
+];
+function select(s){if(s.hors_domaine)return{action:'REFUSE',regle:'R0',motif:'hors périmètre'};if(s.premisse_fausse)return{action:'CLARIFY',regle:'R1',motif:'prémisse invalidée'};if(s.ambigu)return{action:'CLARIFY',regle:'R3',motif:'ambigu'};if(s.consequence_reelle)return{action:'VERIFY',regle:'R9',motif:'conséquence réelle'};return{action:'ANSWER',regle:'R10',motif:'OK'};}
+function veritas(f,c){if(f.consequence_reelle)return{verdict:'CONFLICT',reason:'sources divergentes'};if(f.premisse_fausse)return{verdict:'FALSE',reason:'prémisse contredite'};if(f.hors_domaine)return{verdict:'UNKNOWN',reason:'hors domaine'};if(f.ambigu)return{verdict:'UNKNOWN',reason:'référents non résolus'};if(c.action==='ANSWER')return{verdict:'SUPPORTED',reason:'faits stables'};return{verdict:'UNKNOWN',reason:'insuffisant'};}
+function arbitre(c,v){if(c.action==='REFUSE')return{decision:'REFUSER'};if(c.action==='CLARIFY')return{decision:'DEMANDER_HUMAIN'};if(v.verdict==='CONFLICT'||v.verdict==='FALSE')return{decision:'DEMANDER_HUMAIN'};if(c.action==='VERIFY')return{decision:'BLOQUER_ACTION'};if(v.verdict==='SUPPORTED')return{decision:'AUTORISER'};return{decision:'DEMANDER_HUMAIN'};}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));let last=null;
+async function run(){const btn=document.getElementById('run');btn.disabled=true;const text=document.getElementById('intent').value.trim();const sc=SCENARIOS.find(s=>s.text===text);const flags=sc?sc.flags:{};const proofs=sc?sc.proofs:[{m:'q',t:'Analyse locale'}];const stages=[...document.querySelectorAll('.stage')];stages.forEach(s=>s.className='stage');['o0','o1','o2','o3','o4'].forEach(i=>document.getElementById(i).textContent='—');
+const pbox=document.getElementById('proof-box');pbox.className='proof-box';document.getElementById('why-btn').classList.remove('show');document.getElementById('why-panel').classList.remove('open');
+stages[0].classList.add('on');document.getElementById('o0').textContent=text.slice(0,60);await sleep(350);
+stages[0].classList.add('done');stages[1].classList.add('on');const choix=select(flags);document.getElementById('o1').textContent=choix.action+'\n'+choix.regle;await sleep(400);
+stages[1].classList.add('done');stages[2].classList.add('on');const v=veritas(flags,choix);document.getElementById('o2').textContent=v.verdict;const ul=document.getElementById('proof-list');ul.innerHTML='';proofs.forEach(p=>{const li=document.createElement('li');li.innerHTML='<span class="mark '+(p.m==='yes'?'yes':p.m==='no'?'no':'q')+'">'+(p.m==='yes'?'✓':p.m==='no'?'✗':'?')+'</span><span>'+p.t+'</span>';ul.appendChild(li);});pbox.classList.add('show');pbox.classList.add(v.verdict==='CONFLICT'||v.verdict==='FALSE'?'conflict':v.verdict==='SUPPORTED'?'ok':'warn');await sleep(600);
+stages[2].classList.add('done');stages[3].classList.add('on');const arb=arbitre(choix,v);document.getElementById('o3').textContent=arb.decision;await sleep(350);
+stages[3].classList.add('done');stages[4].classList.add('on');const ok=arb.decision==='AUTORISER';document.getElementById('o4').textContent=ok?'AUTORISÉ':'NON AUTORISÉ';stages[4].classList.add(ok?'done':'fail');
+document.getElementById('llm-v').textContent=flags.hors_domaine?'REFUS':'EXÉCUTER';document.getElementById('llm-v').className='verdict '+(flags.hors_domaine?'stop':'go');
+document.getElementById('llm-d').textContent='Intention → outil → act (sans gate de preuve)';
+const map={AUTORISER:['go','AUTORISÉ'],REFUSER:['stop','REFUSÉ'],DEMANDER_HUMAIN:['wait','HUMAIN REQUIS'],BLOQUER_ACTION:['wait','BLOQUÉ']};
+const [cls,lab]=map[arb.decision];const av=document.getElementById('aion-v');av.className='verdict '+cls;av.textContent=lab;
+document.getElementById('aion-d').textContent=choix.regle+' · '+v.verdict;last={choix,v,arb};
+document.getElementById('why-btn').classList.add('show');document.getElementById('why-btn').textContent=ok?'Pourquoi autorisé ?':'Pourquoi ?';btn.disabled=false;}
+document.getElementById('why-btn').onclick=()=>{if(!last)return;const p=document.getElementById('why-panel');p.innerHTML='<div class="wh">'+last.arb.decision+'</div><div>'+last.choix.action+' ('+last.choix.regle+') — '+last.choix.motif+'</div><div>Veritas : '+last.v.verdict+' — '+last.v.reason+'</div><div class="wf">Preuve insuffisante ou contradictoire → pas d\'autorisation. La preuve décide, pas l\'intention.</div>';p.classList.toggle('open');};
+const box=document.getElementById('scenarios');SCENARIOS.forEach(s=>{const b=document.createElement('button');b.type='button';b.className='sc';b.textContent=s.title;b.onclick=()=>{document.querySelectorAll('.sc').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById('intent').value=s.text;};box.appendChild(b);});
+document.getElementById('run').onclick=run;document.querySelector('.sc')?.classList.add('active');
+</script></body></html>

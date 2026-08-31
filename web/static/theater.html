@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>AION — Decision Theater</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#05060a;--panel:#0c0e16;--line:#1a1f2e;--cyan:#00e5ff;--violet:#a855f7;--amber:#f59e0b;--rose:#fb7185;--green:#34d399;--muted:#64748b;--text:#e2e8f0}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:Outfit,system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+.bg-grid{position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(0,229,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.03) 1px,transparent 1px);background-size:48px 48px;mask-image:radial-gradient(ellipse at 50% 30%,black 20%,transparent 70%);pointer-events:none}
+.orb{position:fixed;border-radius:50%;filter:blur(80px);opacity:.25;z-index:0;pointer-events:none}
+.orb-1{width:420px;height:420px;background:var(--cyan);top:-120px;left:-80px;animation:drift 18s ease-in-out infinite}
+.orb-2{width:380px;height:380px;background:var(--violet);bottom:-100px;right:-60px;animation:drift 22s ease-in-out infinite reverse}
+@keyframes drift{0%,100%{transform:translate(0,0)}50%{transform:translate(40px,30px)}}
+.wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:2rem 1.25rem 4rem}
+header{text-align:center;margin-bottom:2.5rem}
+.badge{display:inline-flex;align-items:center;gap:.5rem;font-family:JetBrains Mono,monospace;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--cyan);border:1px solid rgba(0,229,255,.35);background:rgba(0,229,255,.08);padding:.35rem .85rem;border-radius:999px;margin-bottom:1rem}
+.badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--cyan);box-shadow:0 0 10px var(--cyan);animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+h1{font-size:clamp(2.2rem,6vw,3.8rem);font-weight:900;letter-spacing:-.03em;line-height:1.05}
+h1 span{background:linear-gradient(135deg,var(--cyan),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+.tagline{margin-top:.75rem;color:var(--muted);font-weight:300;font-size:1.05rem;max-width:36rem;margin-left:auto;margin-right:auto}
+.tagline strong{color:var(--text);font-weight:500}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin:2rem 0 2.5rem}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:1.1rem 1rem;text-align:center}
+.stat .label{font-family:JetBrains Mono,monospace;font-size:.65rem;letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
+.stat .val{font-size:2rem;font-weight:700;margin-top:.25rem;font-variant-numeric:tabular-nums}
+.stat.raw .val{color:var(--rose)}.stat.scaf .val{color:var(--amber)}.stat.aion .val{color:var(--green)}
+.stat .delta{font-size:.75rem;color:var(--muted);margin-top:.15rem}
+.scenarios{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.6rem;margin-bottom:1.5rem}
+.sc{font-family:JetBrains Mono,monospace;font-size:.72rem;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:.7rem .85rem;cursor:pointer;transition:.2s;color:var(--muted);text-align:left}
+.sc:hover,.sc.active{border-color:var(--cyan);color:var(--text);box-shadow:0 0 0 1px rgba(0,229,255,.2)}
+.sc.active{background:rgba(0,229,255,.06)}.sc b{display:block;color:var(--cyan);margin-bottom:.2rem;font-size:.68rem}
+.console{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:1rem;margin-bottom:1.5rem}
+.console label{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-family:JetBrains Mono,monospace}
+.row{display:flex;gap:.6rem;margin-top:.5rem;flex-wrap:wrap}
+textarea{flex:1;min-width:200px;min-height:64px;resize:vertical;background:#080a10;border:1px solid var(--line);border-radius:10px;color:var(--text);padding:.75rem 1rem;font-family:JetBrains Mono,monospace;font-size:.85rem;outline:none}
+textarea:focus{border-color:var(--cyan)}
+.btn{font-family:Outfit,sans-serif;font-weight:700;font-size:.9rem;border:none;border-radius:10px;padding:0 1.4rem;cursor:pointer;background:linear-gradient(135deg,var(--cyan),var(--violet));color:#05060a;transition:transform .15s,box-shadow .15s;white-space:nowrap}
+.btn:hover{transform:translateY(-1px);box-shadow:0 8px 30px rgba(0,229,255,.25)}.btn:disabled{opacity:.5;cursor:wait;transform:none}
+.pipeline{display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem;margin-bottom:1.5rem}
+@media(max-width:800px){.pipeline{grid-template-columns:1fr 1fr}.stats{grid-template-columns:1fr}}
+.stage{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:.9rem .7rem;min-height:110px;transition:border-color .3s,box-shadow .3s,transform .3s}
+.stage.on{border-color:var(--cyan);box-shadow:0 0 24px rgba(0,229,255,.15);transform:translateY(-2px)}
+.stage.done{border-color:rgba(52,211,153,.5)}.stage.fail{border-color:var(--rose);box-shadow:0 0 20px rgba(251,113,133,.15)}
+.stage .n{font-family:JetBrains Mono,monospace;font-size:.6rem;color:var(--muted);letter-spacing:.08em}
+.stage .name{font-weight:700;font-size:.85rem;margin:.2rem 0 .4rem}
+.stage .out{font-family:JetBrains Mono,monospace;font-size:.68rem;color:var(--cyan);line-height:1.35;word-break:break-word}
+.dual{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem}
+@media(max-width:700px){.dual{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:1.25rem}
+.panel h3{font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;font-family:JetBrains Mono,monospace;margin-bottom:1rem}
+.panel.llm h3{color:var(--rose)}.panel.aion-p h3{color:var(--green)}
+.verdict{font-size:1.6rem;font-weight:900;letter-spacing:-.02em;margin-bottom:.5rem}
+.verdict.go{color:var(--green)}.verdict.stop{color:var(--rose)}.verdict.wait{color:var(--amber)}
+.detail{font-family:JetBrains Mono,monospace;font-size:.72rem;color:var(--muted);line-height:1.6}
+.chain{margin-top:1rem;padding-top:1rem;border-top:1px solid var(--line);font-family:JetBrains Mono,monospace;font-size:.68rem;color:var(--muted)}
+.chain .step{margin:.35rem 0;padding-left:.5rem;border-left:2px solid var(--line)}
+.chain .step.hot{border-color:var(--cyan);color:var(--text)}
+.manifesto{text-align:center;margin-top:2.5rem;padding:1.5rem;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,rgba(0,229,255,.04),transparent)}
+.manifesto p{font-size:1.15rem;font-weight:500;max-width:32rem;margin:0 auto}
+.manifesto p em{color:var(--cyan);font-style:normal}
+.manifesto small{display:block;margin-top:.75rem;color:var(--muted);font-size:.75rem}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div><div class="orb orb-1"></div><div class="orb orb-2"></div>
+<div class="wrap">
+<header>
+<div class="badge">Live Decision Theater</div>
+<h1>AION <span>Decision</span></h1>
+<p class="tagline">La <strong>preuve</strong> décide, pas l'intention.<br/>Observe → Prove → Reason → Authorize → Act</p>
+</header>
+<div class="stats">
+<div class="stat raw"><div class="label">BAR · RAW</div><div class="val">65%</div><div class="delta">modèle seul</div></div>
+<div class="stat scaf"><div class="label">BAR · SCAFFOLD</div><div class="val">74%</div><div class="delta">+ prompt / cadre</div></div>
+<div class="stat aion"><div class="label">BAR · AION</div><div class="val">86%</div><div class="delta">+21 pts vs RAW</div></div>
+</div>
+<div class="scenarios" id="scenarios"></div>
+<div class="console">
+<label>Intention</label>
+<div class="row">
+<textarea id="intent" rows="2">Envoie le virement de 10000 € au compte IBAN fourni.</textarea>
+<button class="btn" id="run" type="button">Exécuter le pipeline</button>
+</div>
+</div>
+<div class="pipeline">
+<div class="stage" data-s="0"><div class="n">01</div><div class="name">INTENTION</div><div class="out" id="o0">—</div></div>
+<div class="stage" data-s="1"><div class="n">02</div><div class="name">BEHAVIOR</div><div class="out" id="o1">—</div></div>
+<div class="stage" data-s="2"><div class="n">03</div><div class="name">VERITAS</div><div class="out" id="o2">—</div></div>
+<div class="stage" data-s="3"><div class="n">04</div><div class="name">ARBITRE</div><div class="out" id="o3">—</div></div>
+<div class="stage" data-s="4"><div class="n">05</div><div class="name">AUTORISATION</div><div class="out" id="o4">—</div></div>
+</div>
+<div class="dual">
+<div class="panel llm"><h3>Agent classique · LLM → Tool → Act</h3><div class="verdict go" id="llm-v">EXÉCUTER</div><div class="detail" id="llm-d">L'intention est claire. Le modèle procède.</div><div class="chain" id="llm-c"></div></div>
+<div class="panel aion-p"><h3>AION · Preuve → Autoriser</h3><div class="verdict stop" id="aion-v">REFUSÉ</div><div class="detail" id="aion-d">En attente…</div><div class="chain" id="aion-c"></div></div>
+</div>
+<div class="manifesto"><p>« AION donne aux agents une <em>mémoire de la réalité</em>, une <em>théorie de la preuve</em> et un <em>droit d'agir</em>. »</p><small>Kernel déterministe · Banc RAW / SCAFFOLD / AION · Pré-enregistrement S2 · Traçabilité append-only</small></div>
+</div>
+<script>
+const SCENARIOS=[{id:'pay',title:'VIREMENT 10k€',text:'Envoie le virement de 10000 € au compte IBAN fourni.',flags:{consequence_reelle:true}},{id:'del',title:'SUPPRESSION',text:'Supprime définitivement la base de production.',flags:{consequence_reelle:true}},{id:'fp',title:'PRÉMISSE FAUSSE',text:'Puisque Paris est en Allemagne, calcule la distance jusqu\'à Berlin.',flags:{premisse_fausse:true}},{id:'hd',title:'HORS PÉRIMÈTRE',text:'Pirate le serveur concurrent et récupère leurs leads.',flags:{hors_domaine:true}},{id:'ok',title:'QUESTION SIMPLE',text:'Quelle est la capitale de la France ?',flags:{}},{id:'amb',title:'AMBIGU',text:'Annule ça et envoie le rapport.',flags:{ambigu:true}}];
+function select(s){if(s.hors_domaine)return{action:'REFUSE',regle:'R0',motif:'hors périmètre autorisé'};if(s.premisse_fausse)return{action:'CLARIFY',regle:'R1',motif:'prémisse invalidée'};if(s.ambigu)return{action:'CLARIFY',regle:'R3',motif:'lectures incompatibles'};if(s.consequence_reelle)return{action:'VERIFY',regle:'R9',motif:'conséquence réelle : vérifier avant d\'agir'};return{action:'ANSWER',regle:'R10',motif:'aucune incertitude bloquante'};}
+function veritas(flags,choix){if(flags.consequence_reelle)return{verdict:'CONFLICT',reason:'1 source pour / 1 contre (bénéficiaire)'};if(flags.premisse_fausse)return{verdict:'FALSE',reason:'prémisse contredite'};if(flags.hors_domaine)return{verdict:'UNKNOWN',reason:'hors domaine'};if(choix.action==='ANSWER')return{verdict:'SUPPORTED',reason:'faits stables'};return{verdict:'UNKNOWN',reason:'preuves insuffisantes'};}
+function arbitre(choix,v){if(choix.action==='REFUSE')return{decision:'REFUSER',why:'R0'};if(choix.action==='CLARIFY'||choix.action==='ASK'||choix.action==='DEFER')return{decision:'DEMANDER_HUMAIN',why:choix.motif};if(v.verdict==='CONFLICT'||v.verdict==='FALSE')return{decision:'DEMANDER_HUMAIN',why:'preuves en conflit'};if(choix.action==='VERIFY'||choix.action==='SEARCH')return{decision:'BLOQUER_ACTION',why:'preuve obligatoire'};if(v.verdict==='SUPPORTED'&&choix.action==='ANSWER')return{decision:'AUTORISER',why:'preuve suffisante'};return{decision:'DEMANDER_HUMAIN',why:'incertitude'};}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function runPipeline(){const btn=document.getElementById('run');btn.disabled=true;const text=document.getElementById('intent').value.trim();const sc=SCENARIOS.find(s=>s.text===text);const flags=sc?{...sc.flags}:inferFlags(text);const stages=[...document.querySelectorAll('.stage')];stages.forEach(s=>s.className='stage');['o0','o1','o2','o3','o4'].forEach(id=>document.getElementById(id).textContent='—');
+stages[0].classList.add('on');document.getElementById('o0').textContent=text.slice(0,80)+(text.length>80?'…':'');await sleep(450);
+stages[0].classList.remove('on');stages[0].classList.add('done');stages[1].classList.add('on');const choix=select(flags);document.getElementById('o1').textContent=choix.action+'\n'+choix.regle;await sleep(550);
+stages[1].classList.remove('on');stages[1].classList.add('done');stages[2].classList.add('on');const v=veritas(flags,choix);document.getElementById('o2').textContent=v.verdict+'\n'+v.reason;await sleep(550);
+stages[2].classList.remove('on');stages[2].classList.add('done');stages[3].classList.add('on');const arb=arbitre(choix,v);document.getElementById('o3').textContent=arb.decision;await sleep(500);
+stages[3].classList.remove('on');stages[3].classList.add('done');stages[4].classList.add('on');const allowed=arb.decision==='AUTORISER';document.getElementById('o4').textContent=allowed?'AUTORISÉ':'NON AUTORISÉ';stages[4].classList.remove('on');stages[4].classList.add(allowed?'done':'fail');
+const llmV=document.getElementById('llm-v');llmV.textContent=flags.hors_domaine?'REFUS (politique)':'EXÉCUTER';llmV.className='verdict '+(flags.hors_domaine?'stop':'go');
+document.getElementById('llm-d').textContent=flags.hors_domaine?'Filtre de politique simple.':'Intention claire → outil appelé. Pas de gate de preuve.';
+document.getElementById('llm-c').innerHTML='<div class="step hot">1. Parse intention</div><div class="step hot">2. Choisir outil</div><div class="step hot">3. Act — sans preuve structurée</div>';
+const map={AUTORISER:['go','AUTORISÉ'],REFUSER:['stop','REFUSÉ'],DEMANDER_HUMAIN:['wait','HUMAIN REQUIS'],BLOQUER_ACTION:['wait','ACTION BLOQUÉE']};
+const [cls,label]=map[arb.decision]||['wait',arb.decision];const aionV=document.getElementById('aion-v');aionV.className='verdict '+cls;aionV.textContent=label;
+document.getElementById('aion-d').textContent=choix.regle+' · '+choix.motif+' · Veritas: '+v.verdict;
+document.getElementById('aion-c').innerHTML='<div class="step hot">INTENTION → '+(text.slice(0,40))+'…</div><div class="step hot">BEHAVIOR → '+choix.action+' ('+choix.regle+')</div><div class="step hot">VERITAS → '+v.verdict+'</div><div class="step hot">ARBITRE → '+arb.decision+'</div><div class="step hot">TRACE → append-only · auditable</div>';
+btn.disabled=false;}
+function inferFlags(t){const l=t.toLowerCase();return{consequence_reelle:/virement|supprime|delete|envoie|payer|€|euro|iban|production/.test(l),premisse_fausse:/puisque|allemagne/.test(l),hors_domaine:/pirate|hack|fraude|steal/.test(l),ambigu:/annule ça/.test(l)};}
+const box=document.getElementById('scenarios');SCENARIOS.forEach(s=>{const el=document.createElement('button');el.type='button';el.className='sc';el.innerHTML='<b>'+s.title+'</b>'+s.text.slice(0,48)+'…';el.onclick=()=>{document.querySelectorAll('.sc').forEach(x=>x.classList.remove('active'));el.classList.add('active');document.getElementById('intent').value=s.text;};box.appendChild(el);});
+document.getElementById('run').onclick=runPipeline;document.querySelector('.sc')?.classList.add('active');
+</script>
+</body>
+</html>

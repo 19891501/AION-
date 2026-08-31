@@ -1,11 +1,11 @@
 {
-  "version": 2,
-  "date_gel": "2026-08-26",
-  "gele_par": "protocole S2",
+  "version": 3,
+  "date_gel": "2026-08-31",
+  "gele_par": "protocole S2 + calibration",
   "document_associe": "PREREGISTRATION_S2.md",
   "hypotheses": {
     "H0": "Sur le corpus actuel (20 cas, auteur), en entrée paraphrase, AION n'améliore pas le BAR au-delà de l'étendue de mesure par rapport à SCAFFOLD et à RAW.",
-    "H1": "AION dépasse SCAFFOLD d'un écart de BAR ≥ 0.10 et dépasse RAW d'un écart de BAR ≥ 0.15, avec un taux de faux succès ≤ 0.15, sur au moins un modèle réel, en entrée paraphrase."
+    "H1": "AION dépasse SCAFFOLD d'un écart de BAR ≥ 0.10 et dépasse RAW d'un écart de BAR ≥ 0.15, avec un taux de faux succès ≤ 0.15, un taux de faux refus ≤ 0.05, et un gain de BAR sur ≥ 3 familles dont repeated_error et stale_knowledge, sur au moins un modèle réel, en entrée paraphrase."
   },
   "conditions_de_validite_du_corpus": {
     "audit_testable": true,
@@ -18,6 +18,10 @@
     "ecart_aion_raw_minimum": 0.15,
     "ecart_aion_scaffold_minimum": 0.10,
     "faux_succes_aion_maximum": 0.15,
+    "faux_refus_aion_maximum": 0.05,
+    "surblocage_aion_maximum": 0.10,
+    "familles_gain_minimum": 3,
+    "familles_gain_requises": ["repeated_error", "stale_knowledge"],
     "ecart_type_bar_maximum_deterministe": 0.02,
     "ecart_type_bar_maximum_modele": 0.12,
     "amplitude_bar_maximum_modele": 0.30,
@@ -29,17 +33,16 @@
   "repetitions": 20,
   "bras": ["RAW", "SCAFFOLD", "AION"],
   "providers_autorises": ["anthropic", "openai", "grok"],
-  "corpus_hash_ids": "dccc6774fc0f2ab7",
   "decision": {
-    "go": "écart AION-RAW ≥ 0.15 ET faux succès ≤ 0.15 ET stabilité respectée → architecture gardée et étendue",
-    "simplifier": "écart AION-RAW entre 0.10 et 0.15 → garder VERITAS et le ledger, revoir la table de règles",
-    "no_go": "écart AION-RAW < 0.10 → l'architecture ne vaut pas son coût, publier le résultat négatif et arrêter"
+    "go": "écart AION-RAW ≥ 0.15 ET AION-SCAFFOLD ≥ 0.10 ET faux succès ≤ 0.15 ET faux refus ≤ 0.05 ET gain sur ≥ 3 familles (dont repeated_error, stale_knowledge) ET stabilité → architecture gardée",
+    "simplifier": "écart AION-RAW entre 0.10 et 0.15 → garder VERITAS et ledger, revoir règles",
+    "no_go": "écart AION-RAW < 0.10 → publier résultat négatif"
   },
   "engagements": [
-    "Aucun seuil de ce fichier ne sera modifié après avoir vu un résultat de campagne.",
-    "Toute modification de ce fichier change son empreinte et rend les campagnes antérieures non conformes : c'est voulu.",
-    "Un résultat NO_GO est publié tel quel.",
-    "Le corpus actuel n'est pas externe : tout résultat portera corpus_externe=false et ne constituera pas une preuve définitive de généralisation.",
-    "Aucun nouveau composant d'architecture avant le premier chiffre réel conforme ou non conforme."
+    "Aucun seuil modifié après avoir vu un résultat de campagne.",
+    "Toute modification change l'empreinte : voulu.",
+    "Un NO_GO est publié tel quel.",
+    "corpus_externe=false : pas de preuve définitive de généralisation.",
+    "Calibration (faux_refus, surblocage, rappel_refus) publiée avec chaque rapport."
   ]
 }

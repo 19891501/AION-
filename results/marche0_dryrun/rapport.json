@@ -1,0 +1,17 @@
+{
+  "status": "MARCHE_0_DRYRUN",
+  "provider": "offline",
+  "preenregistrement_sha256": "147838769f0cd730d2d4284630f40e62590a45436cb64f6dbcb2e6cf88166bb6",
+  "corpus_sha256": "be55100a9349475bc6e8baf66abfb7b0346af71b32b4895e39db9540578ee4cf",
+  "n_cas": 20,
+  "drapeaux": {
+    "RAW": 0.3, "SCAFFOLD": 0.3, "AION": 1.0,
+    "AION_minus_RAW": 0.7, "AION_minus_SCAFFOLD": 0.7
+  },
+  "paraphrase_lexical": {
+    "RAW": 0.3, "SCAFFOLD": 0.3, "AION": 0.5,
+    "AION_minus_RAW": 0.2, "AION_minus_SCAFFOLD": 0.2
+  },
+  "s2_status": "FROZEN_NOT_RUN",
+  "api_cost_usd": 0
+}

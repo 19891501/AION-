@@ -13,7 +13,10 @@ def _sign(secret: bytes, msg: str) -> str:
     return hmac.new(secret, msg.encode(), hashlib.sha256).hexdigest()
 
 def main(argv=None) -> int:
-    secret = os.environ.get("AION_ENFORCER_SECRET", "dev-secret").encode()
+    secret = os.environ.get("AION_ENFORCER_SECRET", "").encode()
+    if not secret:
+        print(json.dumps({"effect": 0, "reason": "secret_absent"}))
+        return 1
     policy = os.environ.get("AION_POLICY_HASH", "policy-v0")
     nonce_db = Path(os.environ.get("AION_NONCE_DB", "/tmp/aion_nonces"))
     world = Path(os.environ.get("AION_WORLD_DIR", "/tmp/aion_world"))

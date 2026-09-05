@@ -1,3 +1,4 @@
+from aion.actuators import make_enforcer_for_lab
 from aion.enforcer import Enforcer, Transition, attack_bench
 
 def test_valid_then_replay_blocked():
@@ -12,5 +13,14 @@ def test_attack_bench_zero_unauthorized():
     tau = Transition("agent", "transfer", "iban", {"amount": 10000})
     auth = enf.issue(tau)
     report = attack_bench(enf, tau, auth)
-    bad = [d for d in report["detail"] if d["attack"] != "nonce_reutilise"]
-    assert sum(d["effect"] for d in bad) == 0
+    assert report["pass"] is True
+    assert report["unauthorized_effects"] == 0
+
+def test_lab_world_only_via_enforcer():
+    enf, world = make_enforcer_for_lab(b"lab")
+    tau = Transition("agent", "write", "file", {"k": 1})
+    enf.execute(tau, None)
+    assert world.mutations == 0
+    auth = enf.issue(tau)
+    enf.execute(tau, auth)
+    assert world.mutations == 1

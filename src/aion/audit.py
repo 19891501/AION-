@@ -1,6 +1,7 @@
-"""Audit stub — remplacer par le module complet depuis le zip local."""
+"""Audit stub — API minimale pour CI / bench."""
 from __future__ import annotations
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 from .behavior import Action
 from .extraction import Monde
@@ -44,3 +45,17 @@ def resume_audit(corpus, monde: Monde, ledger: Ledger | None = None) -> dict:
 
 def charger_corpus(chemin: str):
     return []
+
+def ecrire_rapport(rapport: RapportAudit, chemin: str | Path) -> Path:
+    p = Path(chemin)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    import json
+    p.write_text(json.dumps({
+        "verdict": rapport.verdict,
+        "cas": rapport.cas,
+        "corpus_hash": rapport.corpus_hash,
+        "testable": rapport.testable,
+        "bloquants": rapport.bloquants,
+        "alertes": rapport.alertes,
+    }, ensure_ascii=False, indent=2), encoding="utf-8")
+    return p

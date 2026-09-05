@@ -1,0 +1,25 @@
+name: Free CI (0 EUR)
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  free:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]" || pip install -e .
+      - name: Kernel drapeaux
+        run: |
+          PYTHONPATH=src python - <<'PY'
+          from aion.providers.mock import MockProvider
+          from aion.bench.runner import campagne
+          r = campagne("AION", MockProvider(), repetitions=1, entree="drapeaux", extracteur="lexical")
+          assert r.bar_moyen == 1.0, r.bar_moyen
+          print("AION drapeaux BAR", r.bar_moyen)
+          PY
+      - name: Enforcer attack bench
+        run: PYTHONPATH=src python -m pytest tests/test_enforcer_free.py -q

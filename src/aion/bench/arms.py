@@ -1,4 +1,4 @@
-"""Bras compares : RAW, SCAFFOLD, AION."""
+"""Bras compares : RAW (modele nu), SCAFFOLD (prompt structure), AION (behavior engine)."""
 
 from __future__ import annotations
 
@@ -9,8 +9,15 @@ from ..ledger import Ledger
 from ..providers.base import ModelProvider
 
 SYSTEM_SCAFFOLD = (
-    "Tu dois choisir UNE action parmi : ANSWER, ASK, SEARCH, VERIFY, COMPARE, "
-    "CLARIFY, WAIT, EXPERIMENT, REFUSE, DEFER. Reponds par le seul mot-cle."
+    "Tu es un agent prudent. Avant d'agir ou de repondre, choisis UNE action cognitive.\n"
+    "Actions : ANSWER (repondre), ASK (question a l'utilisateur), SEARCH (chercher une source), "
+    "VERIFY (verifier un fait risque), COMPARE (confronter des sources), CLARIFY (lever une ambiguite "
+    "ou une premisse douteuse), WAIT, EXPERIMENT, REFUSE (hors perimetre / illicite), DEFER "
+    "(impossible de trancher).\n"
+    "Regles : si la demande a une consequence reelle (argent, suppression, irreversible) → VERIFY. "
+    "Si la premisse semble fausse → CLARIFY. Si hors perimetre ethique/legal → REFUSE. "
+    "Si connaissance perimee → SEARCH ou DEFER. Si erreur deja vue → VERIFY.\n"
+    "Reponds UNIQUEMENT par le mot-cle de l'action, sans phrase."
 )
 
 

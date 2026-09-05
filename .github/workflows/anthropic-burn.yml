@@ -15,12 +15,13 @@ on:
       phase:
         description: "Phase"
         required: true
-        default: "all"
+        default: "micro"
         type: choice
         options:
           - micro
           - all
           - etendue
+          - s2
       cout_max:
         description: "Plafond USD estimé (tokens)"
         required: true
@@ -29,22 +30,19 @@ on:
 jobs:
   burn:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 180
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
       - name: Install package
         run: |
           pip install -U pip
           pip install -e ".[anthropic]"
           python -c "from aion.budget import Budget; from aion.providers import charger; print('OK')"
-
       - name: Preflight
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -65,7 +63,6 @@ jobs:
           print("preflight:", r.modele, repr(r.texte[:40]),
                 "in", r.tokens_entree, "out", r.tokens_sortie, f"~${c:.6f}")
           PY
-
       - name: Micro campagne
         if: inputs.phase == 'micro' || inputs.phase == 'all'
         env:
@@ -76,12 +73,25 @@ jobs:
             --modele "${{ inputs.modele }}" --micro \
             --entree paraphrase --extracteur llm \
             --cache results/cache_anthropic \
-            --budget-appels 150 --cout-max "${{ inputs.cout_max }}" \
-            --out results/ci_micro || true
-          ls -la results/ci_micro || true
-
+            --budget-appels 500 --cout-max "${{ inputs.cout_max }}" \
+            --out results/ci_micro
+          ls -la results/ci_micro
+      - name: S2 confirmatoire (20 reps)
+        if: inputs.phase == 's2' || inputs.phase == 'all'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          mkdir -p results/cache_anthropic results/ci_s2
+          python -m aion bench --provider anthropic \
+            --modele "${{ inputs.modele }}" \
+            --entree paraphrase --extracteur llm \
+            --reps 20 \
+            --cache results/cache_anthropic \
+            --budget-appels 800 --cout-max "${{ inputs.cout_max }}" \
+            --out results/ci_s2
+          ls -la results/ci_s2
       - name: Campagne étendue
-        if: inputs.phase == 'etendue' || inputs.phase == 'all'
+        if: inputs.phase == 'etendue'
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
@@ -92,9 +102,8 @@ jobs:
             --reps 5 --max-cas 20 \
             --cache results/cache_anthropic \
             --budget-appels 800 --cout-max "${{ inputs.cout_max }}" \
-            --out results/ci_etendue || true
-          ls -la results/ci_etendue || true
-
+            --out results/ci_etendue
+          ls -la results/ci_etendue
       - name: Upload résultats
         if: always()
         uses: actions/upload-artifact@v4
@@ -103,5 +112,6 @@ jobs:
           path: |
             results/ci_micro/
             results/ci_etendue/
+            results/ci_s2/
           if-no-files-found: warn
           retention-days: 14

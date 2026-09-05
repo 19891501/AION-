@@ -1,20 +1,15 @@
-"""CLI AION : aion selftest, aion bench, aion lois."""
+"""CLI AION : aion selftest, aion bench."""
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
 
-from .arbitre import Stake, arbitrer
-from .bench import comparer, couverture, ecrire
-from .bench.cases import CAS, LEDGER_SEED, MONDE
+from .bench.arms import BRAS
+from .bench.runner import campagne, ecrire
 from .budget import Budget, BudgetDepasse
 from .cache import Cache
-from .constitution import ARCHE, CONSTITUTION
 from .ledger import Ledger
-from .preenregistrement import charger as charger_pre
-from .preenregistrement import decision, empreinte, verifier
 from .providers import charger
 from .veritas import Evidence, check
 
@@ -34,34 +29,40 @@ except ImportError:
 def _selftest() -> int:
     led = Ledger()
     led.append("prix_plan_pro", "HYPOTHESIS", justification="observe", source="web")
-    led.revise("prix_plan_pro", "VERIFIED", justification="confirme", source="stripe")
     ruling = check("le prix est de 29 EUR", [Evidence("stripe", True, age_days=2)])
-    from .arbitre import arbitrer as arb
-    a = arb(ruling, Stake(cout=29.0))
+    from .arbitre import Stake, arbitrer
+    a = arbitrer(ruling, Stake(cout=29.0))
     print("selftest OK", ruling.verdict.value, a.decision.value)
     return 0
 
 
 def _bench(args: argparse.Namespace) -> int:
     provider = charger(args.provider, modele=getattr(args, "modele", None) or "")
-    budget = Budget(
-        appels_max=int(getattr(args, "budget_appels", 800) or 800),
-        cout_max_usd=float(getattr(args, "cout_max", 0) or 0),
-    )
     cache = Cache(Path(args.cache)) if getattr(args, "cache", None) else None
     reps = 3 if getattr(args, "micro", False) else int(getattr(args, "reps", 20) or 20)
     max_cas = int(args.max_cas) if getattr(args, "max_cas", None) else None
+    appels_max = int(getattr(args, "budget_appels", 800) or 800)
+    cout_max = float(getattr(args, "cout_max", 0) or 0)
+    graine = int(getattr(args, "graine", 0) or 0)
+    total = Budget(appels_max=appels_max * len(BRAS), cout_max_usd=cout_max)
     try:
-        rapports = comparer(
-            provider,
-            repetitions=reps,
-            graine=int(getattr(args, "graine", 0) or 0),
-            entree=args.entree,
-            extracteur=args.extracteur,
-            cache=cache,
-            budget=budget,
-            max_cas=max_cas,
-        )
+        rapports = {}
+        for nom in BRAS:
+            b = Budget(appels_max=appels_max, cout_max_usd=cout_max)
+            rapports[nom] = campagne(
+                nom, provider,
+                repetitions=reps,
+                graine=graine,
+                entree=args.entree,
+                extracteur=args.extracteur,
+                cache=cache,
+                budget=b,
+                max_cas=max_cas,
+            )
+            total.appels += b.appels
+            total.tokens_entree += b.tokens_entree
+            total.tokens_sortie += b.tokens_sortie
+            total.cout_cumule_usd += b.cout_cumule_usd
     except BudgetDepasse as e:
         print("BUDGET:", e)
         return 2
@@ -69,6 +70,7 @@ def _bench(args: argparse.Namespace) -> int:
     path = ecrire(rapports, out)
     for nom, r in rapports.items():
         print(f"{nom:10} BAR={r.bar_moyen:.3f} fs={r.resume.get('taux_faux_succes')} appels={r.appels_extraction}")
+    print(f"budget_total appels={total.appels} cout_usd~={total.cout_cumule_usd:.4f}")
     print("→", path)
     return 0
 

@@ -1,10 +1,24 @@
-# aion-enforcer (Rust)
+# aion-enforcer (Rust) — pure std
 
-Gate process. Même JSON que `python -m aion.gate`.
+Gate + Issuer AION **sans dépendances crates** (build offline).
+
+## Build
 
 ```bash
+cd enforcer_rs
 cargo build --release
-AION_ENFORCER_SECRET=dev-secret ./target/release/aion-enforcer
+# si noexec: cp target/release/aion-* /tmp && chmod +x /tmp/aion-*
 ```
 
-Voir `src/main.rs`. Si crates.io down, utiliser le gate Python.
+## Binaires
+
+| Binaire | Rôle |
+|---------|------|
+| `aion-issuer` | Signe τ → Authorization (pas d'effet monde) |
+| `aion-enforcer` | Vérifie jeton + mute `AION_WORLD_DIR` |
+
+Env: `AION_ENFORCER_SECRET` (obligatoire), `AION_POLICY_HASH`, `AION_NONCE_DB`, `AION_WORLD_DIR`
+
+Interop: `export AION_RUST_GATE=/tmp/aion-enforcer`
+
+Python issuer → Rust gate validé. Rust issuer → Rust gate validé.

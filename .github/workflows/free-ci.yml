@@ -4,14 +4,16 @@ on:
     branches: [main]
   workflow_dispatch:
 jobs:
-  free:
+  python-power:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -e ".[dev]" || pip install -e .
+      - run: pip install -e ".[dev]" || (pip install -e . && pip install pytest)
+      - name: Power bench Preuve B
+        run: PYTHONPATH=src python -m pytest tests/test_power.py tests/test_enforcer_free.py -q
       - name: Kernel drapeaux
         run: |
           PYTHONPATH=src python - <<'PY'
@@ -21,5 +23,34 @@ jobs:
           assert r.bar_moyen == 1.0, r.bar_moyen
           print("AION drapeaux BAR", r.bar_moyen)
           PY
-      - name: Enforcer attack bench
-        run: PYTHONPATH=src python -m pytest tests/test_enforcer_free.py -q
+  rust-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build pure-std gate
+        run: |
+          cd enforcer_rs
+          cargo build --release
+          cp target/release/aion-enforcer target/release/aion-issuer /tmp/
+          chmod +x /tmp/aion-enforcer /tmp/aion-issuer
+      - name: Rust gate smoke
+        run: |
+          export AION_ENFORCER_SECRET=ci-secret
+          export AION_POLICY_HASH=policy-v0
+          export AION_NONCE_DB=/tmp/ci_nonces
+          export AION_WORLD_DIR=/tmp/ci_world
+          rm -f /tmp/ci_nonces
+          rm -rf /tmp/ci_world
+          python3 - <<'PY'
+          import json, os, subprocess
+          env = os.environ.copy()
+          auth = json.loads(subprocess.check_output(
+              ["/tmp/aion-issuer", json.dumps({"transition":{"actor":"a","action":"b","target":"c","params":{}},"ttl_sec":60})],
+              env=env, text=True))["auth"]
+          payload = json.dumps({"transition":{"actor":"a","action":"b","target":"c","params":{}},"auth":auth})
+          r = subprocess.run(["/tmp/aion-enforcer"], input=payload, capture_output=True, text=True, env=env)
+          assert r.returncode == 0 and "execute" in r.stdout, (r.returncode, r.stdout, r.stderr)
+          r2 = subprocess.run(["/tmp/aion-enforcer"], input=payload, capture_output=True, text=True, env=env)
+          assert r2.returncode != 0 and "nonce" in r2.stdout, r2.stdout
+          print("RUST_GATE_OK", r.stdout.strip())
+          PY

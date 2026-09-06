@@ -14,3 +14,5 @@ services:
         value: local
       - key: PYTHONPATH
         value: src
+      - key: AION_ENFORCER_SECRET
+        generateValue: true

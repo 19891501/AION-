@@ -1,12 +1,14 @@
 from .base import ModelProvider, Reponse
 from .mock import MockProvider
 from .simule import SimuleProvider
+from .offline_mcp import OfflineMCPProvider
 
 __all__ = [
     "MockProvider",
     "ModelProvider",
     "Reponse",
     "SimuleProvider",
+    "OfflineMCPProvider",
     "charger",
 ]
 
@@ -26,6 +28,8 @@ def charger(nom: str, **kwargs):
         return MockProvider(**kwargs)
     if nom == "simule":
         return SimuleProvider(**kwargs)
+    if nom in ("offline", "mcp", "offline_mcp"):
+        return OfflineMCPProvider(**kwargs)
     if nom == "anthropic":
         from .anthropic_provider import AnthropicProvider
 
@@ -53,5 +57,5 @@ def charger(nom: str, **kwargs):
 
     raise ValueError(
         f"provider inconnu: {nom}. "
-        "Choix possibles : mock, simule, local, ollama, anthropic, openai, grok"
+        "Choix possibles : mock, simule, local, offline, mcp, ollama, anthropic, openai, grok"
     )

@@ -32,3 +32,12 @@ def test_cas_neutre_donne_answer():
 def test_deterministe_sur_100_appels():
     s = Situation("q", ambigu=True, autorite_utilisateur=True)
     assert len({selectionner(s).action for _ in range(100)}) == 1
+
+
+def test_consequence_reelle_verify_pas_answer():
+    assert selectionner(Situation("q", consequence_reelle=True)).action is Action.VERIFY
+
+
+def test_hors_domaine_prime_sur_consequence():
+    s = Situation("q", hors_domaine=True, consequence_reelle=True, premisse_fausse=True)
+    assert selectionner(s).action is Action.REFUSE

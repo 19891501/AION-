@@ -1,0 +1,21 @@
+[package]
+name = "aion-enforcer"
+version = "0.1.0"
+edition = "2021"
+description = "AION gate — pure std, zero crates"
+
+[lib]
+name = "aion_enforcer"
+path = "src/lib.rs"
+
+[[bin]]
+name = "aion-enforcer"
+path = "src/main.rs"
+
+[[bin]]
+name = "aion-issuer"
+path = "src/issuer.rs"
+
+[[bin]]
+name = "aion-macaroon"
+path = "src/macaroon_cli.rs"

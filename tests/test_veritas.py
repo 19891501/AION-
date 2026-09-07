@@ -24,3 +24,17 @@ def test_preuve_perimee_est_ecartee():
 def test_preuve_non_fiable_est_ecartee():
     r = check("x", [Evidence("a", True, trusted=False)])
     assert r.verdict is Verdict.UNKNOWN
+
+
+def test_douze_fois_la_meme_source_ne_noie_pas_un_contre():
+    pile = [Evidence("bank", True)] * 12 + [Evidence("aml", False)]
+    assert check("x", pile).verdict is Verdict.CONFLICT
+
+
+def test_age_negatif_futur_ecarte():
+    assert check("x", [Evidence("a", True, age_days=-1)]).verdict is Verdict.UNKNOWN
+
+
+def test_claim_n_influence_pas_le_verdict():
+    assert check("cette phrase est vraie", []).verdict is Verdict.UNKNOWN
+    assert check("", [Evidence("a", True)]).verdict is Verdict.PROOF

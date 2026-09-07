@@ -77,11 +77,25 @@ class ExtracteurLLM:
         if self.cache is not None:
             en_cache = self.cache.lire(cle)
             if en_cache is not None:
+                if self.budget is not None:
+                    self.budget.enregistrer(
+                        input_tokens=0, output_tokens=0,
+                        arm="extracteur_llm", modele=modele, cached=True,
+                    )
                 return en_cache
         if self.budget is not None:
-            self.budget.consommer()      # leve BudgetDepasse AVANT l'appel
+            self.budget.consommer()  # MAX_CALLS / MAX_COST avant l'appel
         self.appels += 1
-        texte = self.provider.complete(prompt, system=SYSTEME, max_tokens=256).texte
+        rep = self.provider.complete(prompt, system=SYSTEME, max_tokens=256)
+        texte = rep.texte
+        if self.budget is not None:
+            self.budget.enregistrer(
+                input_tokens=getattr(rep, "tokens_entree", 0) or 0,
+                output_tokens=getattr(rep, "tokens_sortie", 0) or 0,
+                arm="extracteur_llm",
+                modele=modele,
+                cached=False,
+            )
         if self.cache is not None:
             self.cache.ecrire(cle, texte)
         return texte

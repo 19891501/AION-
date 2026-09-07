@@ -8,7 +8,17 @@ import sys
 from pathlib import Path
 
 from .arbitre import Stake, arbitrer
-from .audit import auditer, charger_corpus, ecrire_rapport, resume_audit
+try:
+    from .audit import auditer, charger_corpus, ecrire_rapport, resume_audit
+except ImportError:  # versions partielles du repo
+    def auditer(*a, **k):
+        raise RuntimeError("audit module incomplete")
+    def charger_corpus(*a, **k):
+        raise RuntimeError("audit module incomplete")
+    def ecrire_rapport(*a, **k):
+        raise RuntimeError("audit module incomplete")
+    def resume_audit(*a, **k):
+        raise RuntimeError("audit module incomplete")
 from .bench import comparer, couverture, ecrire
 from .bench.cases import CAS, LEDGER_SEED, MONDE
 from .budget import Budget, BudgetDepasse
@@ -44,7 +54,14 @@ def _bench(args: argparse.Namespace) -> int:
     provider = charger(args.provider, **kwargs)
 
     cache = Cache(args.cache) if args.cache else None
-    budget = Budget(args.budget_appels, args.cout_appel) if args.budget_appels else None
+    budget = None
+    if args.budget_appels or getattr(args, "cout_max", 0):
+        budget = Budget(
+            appels_max=args.budget_appels or 100_000,
+            cout_max_usd=getattr(args, "cout_max", 0) or 0.0,
+            cout_par_appel=args.cout_appel,
+            modele=args.modele or "",
+        )
     max_cas = args.max_cas if getattr(args, "max_cas", 0) else None
     cas_override = None
     if getattr(args, "corpus", ""):
@@ -94,7 +111,9 @@ def _bench(args: argparse.Namespace) -> int:
             f"{r.drapeaux_exacts:>10.2f}{r.pass_20_controles!s:>7}{r.echecs_parse:>10}"
         )
     if budget:
-        print(f"appels consommes: {budget.appels}/{budget.appels_max} — cout estime {budget.cout_estime():.2f}")
+        r = budget.resume()
+        print(f"appels: {r['appels']}/{r['appels_max']}  tokens in/out: {r['tokens_entree']}/{r['tokens_sortie']}")
+        print(f"cout estime: ${r['cout_estime']:.4f}" + (f" / max ${r['cout_max_usd']:.2f}" if r['cout_max_usd'] else ""))
     if cache:
         print(f"cache: {cache.hits} hits / {cache.hits + cache.miss} lectures (rejouabilite, PAS robustesse)")
     if args.provider in ("mock", "simule", "local"):
@@ -268,10 +287,108 @@ def _corpus(args: argparse.Namespace) -> int:
 
 
 
+def _pipeline(args: argparse.Namespace) -> int:
+    """Chaîne INTENTION → Behavior → Veritas → Arbitre."""
+    from .pipeline import run_pipeline
+    import json
+
+    evidences = []
+    if args.evidence:
+        for item in args.evidence:
+            # format source:pour|contre
+            if ":" in item:
+                src, side = item.rsplit(":", 1)
+                evidences.append({"source": src, "supports": side.lower() in ("pour", "true", "1", "oui")})
+            else:
+                evidences.append({"source": item, "supports": True})
+
+    flags = {
+        "consequence_reelle": args.consequence,
+        "premisse_fausse": args.premisse_fausse,
+        "ambigu": args.ambigu,
+        "hors_domaine": args.hors_domaine,
+        "connaissance_datee": args.datee,
+        "sources_divergentes": args.divergentes,
+    }
+    result = run_pipeline(
+        question=args.question,
+        flags=flags,
+        claim=args.claim,
+        evidences=evidences or None,
+        stake={"cout": args.cout, "reversible": args.reversible} if args.consequence else None,
+    )
+    if args.json:
+        print(result.to_dict() and __import__("json").dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        for step in result.chain:
+            print(f"  → {step}")
+        print(f"  FINAL: {result.final}")
+        if result.behavior:
+            print(f"  ({result.behavior.get('motif', '')})")
+        if result.veritas:
+            print(f"  Veritas: {result.veritas.get('verdict')} — {result.veritas.get('reason')}")
+        if result.arbitre:
+            print(f"  Arbitre: {result.arbitre.get('decision')} — {result.arbitre.get('motif')}")
+        print(f"  {result.principle}")
+    return 0
+
+
+def _perf(args: argparse.Namespace) -> int:
+    """Latence provider (p50/p95) — distinct du BAR."""
+    from .providers import charger
+    from .perf import measure_provider
+    import json
+
+    try:
+        provider = charger(args.provider)
+    except Exception as exc:
+        print(f"FAIL provider: {exc}")
+        return 1
+    report = measure_provider(provider, n=args.n)
+    if args.json:
+        print(json.dumps(report.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(f"provider   {report.provider} / {report.modele}")
+        print(f"samples    {report.ok}/{report.n} ok  ({report.fail} fail)")
+        print(f"p50        {report.p50_ms} ms")
+        print(f"p95        {report.p95_ms} ms")
+        print(f"mean       {report.mean_ms} ms  [{report.min_ms} – {report.max_ms}]")
+    return 0 if report.fail == 0 else 2
+
+
+def _offline(args: argparse.Namespace) -> int:
+    """Serveur offline compatible Ollama — zéro cloud."""
+    from .providers.offline_mcp import servir, OfflineMCPProvider
+    if args.cmd_offline == "serve":
+        host, port = args.host, args.port
+        print(f"offline-mcp écoute sur http://{host}:{port}")
+        print("  compatible: aion bench --provider ollama")
+        print("  ou:         aion bench --provider offline")
+        print("Ctrl+C pour arrêter.")
+        try:
+            servir(host=host, port=port, bloquant=True)
+        except KeyboardInterrupt:
+            print("\narrêt.")
+        return 0
+    if args.cmd_offline == "ping":
+        p = OfflineMCPProvider()
+        r = p.complete("Envoie le virement de 10000 euros", system="Tu dois choisir UNE action parmi : ANSWER, ASK, SEARCH, VERIFY, COMPARE, CLARIFY, WAIT, EXPERIMENT, REFUSE, DEFER. Reponds par le seul mot-cle.")
+        print(r.texte, r.modele)
+        return 0
+    print("usage: aion offline serve|ping")
+    return 1
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="aion", description="Noyau AION")
     sub = p.add_subparsers(dest="cmd", required=True)
-    sub.add_parser("selftest", help="verifie kernel + ledger + arbitre")
+    off = sub.add_parser("offline", help="remplace Ollama/cloud en local (MCP offline)")
+    off_sub = off.add_subparsers(dest="cmd_offline")
+    off_serve = off_sub.add_parser("serve", help="API compatible Ollama sur :11434")
+    off_serve.add_argument("--host", default="127.0.0.1")
+    off_serve.add_argument("--port", type=int, default=11434)
+    off_sub.add_parser("ping", help="test extraction/scaffold offline")
+    sub.add_parser("mcp", help="serveur MCP stdio (aion_propose seulement, aucun outil d'effet)")
     sub.add_parser("status", help="etat des verrous (preenreg, audit, corpus)")
     co = sub.add_parser("corpus", help="stats / validation corpus externe")
     co.add_argument("action", choices=["stats", "validate"], help="stats ou validate")
@@ -287,22 +404,41 @@ def main(argv: list[str] | None = None) -> int:
     a.add_argument("--fichier", default="", help="corpus externe JSON (défaut: banc interne)")
     a.add_argument("--json", action="store_true", help="sortie JSON brute")
     a.add_argument("--out", default="", help="écrire le rapport JSON (hashable)")
+    pl = sub.add_parser("pipeline", help="chaine INTENTION → Behavior → Veritas → Arbitre")
+    pl.add_argument("question", help="intention / demande utilisateur")
+    pl.add_argument("--claim", default=None, help="affirmation a prouver (Veritas)")
+    pl.add_argument("--evidence", action="append", default=[], help="source:pour|contre (repeatable)")
+    pl.add_argument("--consequence", action="store_true", help="consequence reelle")
+    pl.add_argument("--premisse-fausse", action="store_true")
+    pl.add_argument("--ambigu", action="store_true")
+    pl.add_argument("--hors-domaine", action="store_true")
+    pl.add_argument("--datee", action="store_true")
+    pl.add_argument("--divergentes", action="store_true")
+    pl.add_argument("--cout", type=float, default=10000.0)
+    pl.add_argument("--reversible", action="store_true")
+    pl.add_argument("--json", action="store_true")
+    pf = sub.add_parser("perf", help="latence provider p50/p95 (Ollama, local, ...)")
+    pf.add_argument("--provider", default="local", help="local|ollama|mock|simule|...")
+    pf.add_argument("-n", type=int, default=5, help="nombre d'echantillons")
+    pf.add_argument("--json", action="store_true")
     b = sub.add_parser("bench", help="campagne AION-100 (RAW vs SCAFFOLD vs AION)")
     b.add_argument(
         "--provider",
         default="mock",
-        choices=["mock", "simule", "local", "ollama", "anthropic", "openai", "grok"],
+        choices=["mock", "simule", "local", "offline", "mcp", "ollama", "anthropic", "openai", "grok"],
         help="mock/simule/ollama = local ; anthropic/openai/grok = cloud",
     )
     b.add_argument("--modele", default="", help="nom du modèle (sinon valeur par défaut du provider)")
     b.add_argument("--entree", default="drapeaux", choices=["drapeaux", "texte", "paraphrase"],
                    help="drapeaux = poses a la main ; texte/paraphrase = derives par l'extracteur")
-    b.add_argument("--extracteur", default="lexical", choices=["lexical", "llm"],
+    b.add_argument("--extracteur", default="lexical", choices=["lexical", "lexical_v2", "llm"],
                    help="lexical = regles ; llm = drapeaux lus par le modele")
     b.add_argument("--cache", default="", help="dossier de cache des reponses modele (rejouabilite)")
     b.add_argument("--budget-appels", type=int, default=0, dest="budget_appels",
                    help="arret avant depassement (0 = pas de garde-fou)")
     b.add_argument("--cout-appel", type=float, default=0.0, dest="cout_appel")
+    b.add_argument("--cout-max", type=float, default=0.0, dest="cout_max",
+                   help="plafond USD estimé (tokens) — 0 = désactivé")
     b.add_argument("--reps", type=int, default=20)
     b.add_argument("--graine", type=int, default=0)
     b.add_argument("--max-cas", type=int, default=0, dest="max_cas",
@@ -313,6 +449,11 @@ def main(argv: list[str] | None = None) -> int:
     b.add_argument("--out", default="results")
 
     args = p.parse_args(argv)
+    if args.cmd == "offline":
+        return _offline(args)
+    if args.cmd == "mcp":
+        from .runtime import serve_mcp_stdio
+        return serve_mcp_stdio()
     if args.cmd == "selftest":
         return _selftest()
     if args.cmd == "status":
@@ -321,6 +462,10 @@ def main(argv: list[str] | None = None) -> int:
         return _corpus(args)
     if args.cmd == "lois":
         return _lois()
+    if args.cmd == "pipeline":
+        return _pipeline(args)
+    if args.cmd == "perf":
+        return _perf(args)
     if args.cmd == "audit":
         return _audit(args)
     if args.cmd == "preenreg":

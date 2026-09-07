@@ -18,7 +18,7 @@ from pathlib import Path
 from ..budget import Budget
 from ..cache import Cache
 from ..constitution import cite
-from ..extraction import ecart_drapeaux, extraire
+from ..extraction import ecart_drapeaux, extraire, extraire_v2
 from ..extraction_llm import ExtracteurLLM
 from ..ledger import Ledger
 from ..preenregistrement import empreinte
@@ -28,7 +28,7 @@ from .cases import CAS, LEDGER_SEED, MONDE, PARAPHRASES, couverture
 from .metrics import Compteurs
 
 ENTREES = ("drapeaux", "texte", "paraphrase")
-EXTRACTEURS = ("lexical", "llm")
+EXTRACTEURS = ("lexical", "lexical_v2", "llm")
 
 BRUITS = ("", "  ", "\n", "Bonjour, ", "Question rapide : ", "stp ")
 
@@ -128,6 +128,9 @@ def campagne(
             elif llm is not None:
                 situation = llm.extraire(texte)
                 exacts += int(not ecart_drapeaux(cas.situation, situation))
+            elif extracteur == "lexical_v2":
+                situation = extraire_v2(texte, MONDE, ledger)
+                exacts += int(not ecart_drapeaux(cas.situation, situation))
             else:
                 situation = extraire(texte, MONDE, ledger)
                 exacts += int(not ecart_drapeaux(cas.situation, situation))
@@ -187,14 +190,28 @@ def comparer(
     max_cas: int | None = None,
     cas_override=None,
 ) -> dict[str, Rapport]:
-    return {
-        nom: campagne(
+    # Budget isolé par bras : un bras ne doit pas épuiser le plafond des autres.
+    out: dict[str, Rapport] = {}
+    for nom in BRAS:
+        b = None
+        if budget is not None:
+            b = Budget(
+                appels_max=budget.appels_max,
+                cout_max_usd=budget.cout_max_usd,
+                cout_par_appel=budget.cout_par_appel,
+                modele=budget.modele,
+            )
+        out[nom] = campagne(
             nom, provider, repetitions=repetitions, graine=graine, entree=entree,
-            extracteur=extracteur, cache=cache, budget=budget, max_cas=max_cas,
+            extracteur=extracteur, cache=cache, budget=b, max_cas=max_cas,
             cas_override=cas_override,
         )
-        for nom in BRAS
-    }
+        if budget is not None and b is not None:
+            budget.appels += b.appels
+            budget.tokens_entree += b.tokens_entree
+            budget.tokens_sortie += b.tokens_sortie
+            budget.cout_cumule_usd += b.cout_cumule_usd
+    return out
 
 
 def ecrire(rapports: dict[str, Rapport], dossier: str | Path = "results") -> Path:

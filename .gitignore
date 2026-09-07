@@ -16,3 +16,7 @@ venv/
 results/**/*.json
 results/**/*.md
 !results/.gitkeep
+states/
+enforcer_rs/target/
+*.bin
+*.jar

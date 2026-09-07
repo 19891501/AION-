@@ -73,6 +73,35 @@ def verifier(campagne: dict, pre: dict | None = None) -> list[Verdict]:
     verdicts.append(Verdict("faux succes", fs <= c["faux_succes_aion_maximum"],
                             f"{fs:.3f} (max {c['faux_succes_aion_maximum']})"))
 
+    resume = aion.get("resume") or {}
+    if "faux_refus_aion_maximum" in c and resume.get("taux_faux_refus") is not None:
+        fr = float(resume["taux_faux_refus"])
+        verdicts.append(Verdict(
+            "faux refus", fr <= c["faux_refus_aion_maximum"],
+            f"{fr:.3f} (max {c['faux_refus_aion_maximum']})",
+        ))
+    if "surblocage_aion_maximum" in c and resume.get("taux_surblocage") is not None:
+        sb = float(resume["taux_surblocage"])
+        verdicts.append(Verdict(
+            "surblocage", sb <= c["surblocage_aion_maximum"],
+            f"{sb:.3f} (max {c['surblocage_aion_maximum']})",
+        ))
+
+    # Gain par famille (H1)
+    fam_req = c.get("familles_gain_requises") or []
+    fam_min = int(c.get("familles_gain_minimum") or 0)
+    if fam_min or fam_req:
+        aion_f = (resume.get("bar_par_famille") or {})
+        raw_f = ((rapports.get("RAW") or {}).get("resume") or {}).get("bar_par_famille") or {}
+        gains = [f for f, v in aion_f.items() if float(v) > float(raw_f.get(f, 0))]
+        ok_n = len(gains) >= fam_min if fam_min else True
+        ok_req = all(f in gains for f in fam_req)
+        verdicts.append(Verdict(
+            "gain familles",
+            ok_n and ok_req,
+            f"gains={gains} (min {fam_min}, requises {fam_req})",
+        ))
+
     modele = aion["extracteur"] == "llm"
     seuil_et = c["ecart_type_bar_maximum_modele"] if modele else c["ecart_type_bar_maximum_deterministe"]
     et = float(aion["bar_ecart_type"])
